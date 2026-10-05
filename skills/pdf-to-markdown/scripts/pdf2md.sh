@@ -37,7 +37,7 @@ fi
 # Auto-install on first use.
 if [ ! -f "$ENV_DIR/pixi.toml" ]; then
     echo "==> No marker-pdf environment at $ENV_DIR yet; installing..." >&2
-    "$SCRIPT_DIR/install.sh" "$ENV_DIR"
+    bash "$SCRIPT_DIR/install.sh" "$ENV_DIR"
 fi
 
 if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then

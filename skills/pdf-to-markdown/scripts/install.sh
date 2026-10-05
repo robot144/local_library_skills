@@ -7,7 +7,17 @@
 #
 # Safe to re-run: existing manifests are extended, not replaced, and pixi add
 # is a no-op if the dependency is already present.
+#
+# Also restores the executable bit on every script in this directory: some
+# install methods (confirmed: `gh skill install`) don't preserve it, which
+# would otherwise break direct invocation (`scripts/pdf2md.sh ...`) with a
+# plain "Permission denied" even though the file content is untouched. Run
+# this script itself via `bash scripts/install.sh` the first time if it
+# isn't executable yet - after that, every script here (including this one)
+# is fixed for subsequent direct invocation.
 set -euo pipefail
+
+chmod +x "$(dirname "${BASH_SOURCE[0]}")"/*.sh 2>/dev/null || true
 
 ENV_DIR="${1:-${PDF2MD_ENV_DIR:-$HOME/.local/share/pdf2md-env}}"
 mkdir -p "$ENV_DIR"

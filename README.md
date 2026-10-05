@@ -49,6 +49,8 @@ gh skill install robot144/local_library_skills pdf-to-markdown --agent claude-co
 gh skill install robot144/local_library_skills --all --agent claude-code
 ```
 
+Confirmed: `gh skill install` doesn't preserve the executable bit on installed scripts (content is unaffected, just the permission). If a script's own usage docs assume it can be run directly (`scripts/foo.sh ...`) and that fails with "Permission denied", run it once via `bash scripts/foo.sh ...` instead — for `pdf-to-markdown` specifically, `bash scripts/install.sh` self-heals the executable bit on its own sibling scripts, so after that one `bash`-prefixed call, the rest of its documented commands work as written.
+
 Omit `--agent` to install for GitHub Copilot (the default), or pass another supported agent (`cursor`, `codex`, `gemini-cli`, and 20+ others — see `gh skill install --help` or the [`gh skill install` manual](https://cli.github.com/manual/gh_skill_install) for the full flag reference). `--scope` defaults to `project` (current git repo); pass `--scope user` for a user-wide, cross-project install. This installs straight from GitHub — no local clone needed, unlike the manual steps below.
 
 ## Coding agent specific installation
