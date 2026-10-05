@@ -9,6 +9,7 @@ Each skill lives under `skills/<skill-name>/` with a `SKILL.md` describing when 
 | Skill | Purpose |
 |---|---|
 | [`pdf-to-markdown`](skills/pdf-to-markdown/SKILL.md) | Convert a PDF into searchable markdown (local GPU/CPU OCR via marker-pdf) — for large, scanned, or formula-heavy PDFs where reading page-by-page isn't practical. |
+| [`local-library`](skills/local-library/SKILL.md) | Organize a folder of documents into an indexed, searchable structure (root index, optional user-created topic folders, per-document summaries) — and navigate an existing one. Instructions-only; optionally offers `pdf-to-markdown` for searchable versions if that skill's available. |
 
 ## Status
 
@@ -17,14 +18,18 @@ Which skills have actually been exercised against which agent, not just assumed 
 | Skill | claude-cli | codex-cli | copilot-cli | antigravity-cli | mistral-cli |
 |---|---|---|---|---|---|
 | `pdf-to-markdown` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
+| `local-library` | Not checked yet | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
+
+Note on `local-library`: it's almost entirely instructions (classify/summarize/index-writing), not scripts — only its two small helpers (`init-library.py`, `count-docs.py`) have actually been run and verified so far, not the skill's core workflows (classifying a document, writing an entry, searching). "Not checked yet" reflects that, not just an untested install.
 
 ### By OS
 
 | Skill | Linux | macOS | Windows (native) | WSL |
 |---|---|---|---|---|
 | `pdf-to-markdown` | Working | Not checked yet | Not working | Not checked yet |
+| `local-library` | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
 
-`pdf-to-markdown`'s scripts are bash — native Windows (cmd.exe/PowerShell) can't run a `.sh` file at all, hence "Not working" rather than "not checked yet" for that column specifically. WSL is the documented workaround (see the skill's own "Platform check" section) and would likely work since it's a real Linux environment, but that's untested, not assumed — hence its own separate "Not checked yet" rather than lumping it in with native Windows.
+`pdf-to-markdown`'s scripts are bash — native Windows (cmd.exe/PowerShell) can't run a `.sh` file at all, hence "Not working" rather than "not checked yet" for that column specifically. WSL is the documented workaround (see `pdf-to-markdown`'s "Platform check" section) and would likely work since it's a real Linux environment, but that's untested, not assumed — hence its own separate "Not checked yet" rather than lumping it in with native Windows. `local-library`'s own helper scripts are plain Python (no bash dependency), so native Windows is plausible there too — but untested, hence "Not checked yet" rather than assuming it works.
 
 ## Prerequisites
 
