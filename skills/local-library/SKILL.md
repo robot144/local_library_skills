@@ -102,6 +102,22 @@ python3 scripts/show-library.py [path/to/library-root]
 
 Defaults to `./local_library` if no path is given. Prints the library's title (from `CLAUDE.md`), then one entry per document (name, title, `PDF only`/`PDF+md` status, and its `INDEX.md` summary line) grouped by top-level and by topic folder — a quick "what's in here and is it in good shape" view without reading every `INDEX.md` by hand. It also cross-checks `INDEX.md` against what's actually on disk and flags two kinds of drift: an indexed entry whose PDF is missing, and a PDF present but not yet in any `INDEX.md`. Use this when the user asks what's in a library, wants a status check, or you suspect an entry and the files on disk have drifted apart (e.g. after a manual `rm` or a half-finished "add a document" step).
 
+## Browsing a library visually with Quarto
+
+For a human (not just an agent) to browse the library's tree structure and read documents in a rendered web page — sidebar navigation mirroring the folder tree, rendered markdown with math/images, and direct links to each PDF — set up a small Quarto site inside the library root:
+
+```bash
+python3 scripts/init-quarto.py [path/to/library-root]      # one-time: pixi.toml, _quarto.yml, index.qmd, .gitignore
+python3 scripts/sync-quarto-pages.py [path/to/library-root]  # generates/refreshes per-document wrapper pages
+cd <library-root> && pixi install && pixi run quarto preview
+```
+
+Both scripts default to `./local_library` and are safe to re-run. `init-quarto.py` never overwrites a file that already exists; `sync-quarto-pages.py` regenerates its wrapper pages every run (titles stay in sync with `INDEX.md`) and only rewrites an `INDEX.md` markdown link if it isn't already pointing at the wrapper.
+
+**Why wrapper pages, not rendering the `.md` files directly:** some marker-converted documents start with a literal `---` line (an OCR'd title-page divider), which Quarto/pandoc misreads as a YAML frontmatter delimiter and fails to render. `sync-quarto-pages.py` generates a thin `<name>.qmd` next to each `<name>.md` with real frontmatter (`title:` pulled from the `INDEX.md` entry) that pulls in the original content via `{{< include <name>.md >}}` — the source `.md` files are never modified, and the sidebar gets a proper title instead of a raw filename. `_quarto.yml`'s `project.render` list is scoped to only these `.qmd` files plus the `INDEX.md`/`CLAUDE.md` index pages, so the raw per-document `.md` files are never rendered as standalone pages (avoiding both the YAML bug and duplicate output).
+
+Re-run `sync-quarto-pages.py` (then `pixi run quarto render`, or just let a running `quarto preview` pick up the change) whenever a new document gets a markdown conversion — the wrapper won't exist until then, so the `INDEX.md` entry's markdown link stays pointed at the `.md` file as a plain download link in the meantime, same as any `PDF only` entry.
+
 ## Searching an existing library
 
 1. Start from the library root's `CLAUDE.md` — if it's not already in context (auto-loaded), read it directly, then `INDEX.md`.
