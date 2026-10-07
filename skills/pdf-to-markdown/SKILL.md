@@ -9,21 +9,36 @@ Converts a PDF to markdown using [marker](https://github.com/datalab-to/marker) 
 
 ## Platform check — do this first, before running any script
 
-All scripts here are bash (`.sh`). **Check your own environment info for the platform before invoking any of them** — a native Windows shell (cmd.exe/PowerShell) cannot execute a `.sh` file at all, so a script has no way to detect or report that itself; the check has to happen before you try to run one. If the platform isn't Linux or macOS: tell the user these scripts need a bash environment — WSL on Windows is the standard option — and don't attempt to run them directly in a native Windows shell. (Untested on WSL/Git Bash/Cygwin specifically — if you're in one of those, it may work, but say so rather than assuming.)
+Every script here comes in two forms: bash (`.sh`) and a behaviorally-identical Python port (`.py`), both in `scripts/`. **Check your own environment info for the platform before invoking either form:**
+
+- **Linux, macOS, or WSL**: use the `.sh` scripts (`scripts/pdf2md.sh ...`) — this is the original, most-tested path.
+- **Native Windows (cmd.exe/PowerShell/VS Code terminal, no WSL)**: a `.sh` file can't execute there at all, so use the `.py` scripts instead (`python scripts/pdf2md.py ...`, or `python3` if `python` doesn't resolve — try one, fall back to the other). These are new (added for Windows support) and verified behaviorally identical to the `.sh` scripts on Linux; real native-Windows testing is pending — see "Windows-specific risks" below before relying on them for anything long-running or unattended.
+- The `.py` scripts also work fine on Linux/macOS if you'd rather avoid a bash dependency for some other reason — nothing here is Windows-exclusive.
+
+(Untested on Git Bash/Cygwin specifically for the `.sh` path — if you're in one of those, it may work, but say so rather than assuming.)
 
 ## Prerequisites
 
 **Required:**
-- `bash` (all scripts here are bash — see "Platform check" above)
-- [`pixi`](https://pixi.sh/) — `install.sh` checks for it explicitly and fails with a clear error if it's missing; this skill does not install `pixi` itself
+- Either `bash` (for the `.sh` scripts) or Python 3 (for the `.py` scripts) — see "Platform check" above
+- [`pixi`](https://pixi.sh/) — `install.sh`/`install.py` check for it explicitly and fail with a clear error if it's missing; this skill does not install `pixi` itself
 - Internet access, at least for first install (pulls packages via `pixi`) and the first conversion (downloads ~1.8GB of models from Hugging Face) — fully offline after that
 - A few GB of free disk space (pixi environment + cached models)
 
 **Optional, degrades rather than fails if missing:**
-- `pdfinfo` (from the `poppler-utils` package on most Linux distros, or `poppler` via Homebrew on macOS) — used for page-count detection. Without it, auto-chunking silently gets skipped, which re-exposes the memory-exhaustion crash chunking exists to prevent on large PDFs. Worth installing if you'll convert anything big: `apt install poppler-utils` / `brew install poppler` / `dnf install poppler-utils`.
-- `nvidia-smi` or `vulkaninfo` — used only by `estimate.sh`'s GPU-detection heuristic, for the time estimate's human-readable message. You don't need to separately install either of these: `nvidia-smi` ships with the NVIDIA driver itself (present automatically if you have a working NVIDIA GPU setup), and `vulkaninfo` comes from `vulkan-tools` (Debian/Ubuntu) or your distro's Vulkan utilities package, often already present on graphics-capable systems. If neither is found, `estimate.sh` just assumes CPU and gives a more conservative (slower) estimate — actual conversion still does its own independent, correct GPU detection regardless of what `estimate.sh` guessed.
+- `pdfinfo` (from the `poppler-utils` package on most Linux distros, or `poppler` via Homebrew on macOS) — used for page-count detection. Without it, auto-chunking silently gets skipped, which re-exposes the memory-exhaustion crash chunking exists to prevent on large PDFs. Worth installing if you'll convert anything big: `apt install poppler-utils` / `brew install poppler` / `dnf install poppler-utils`. **On native Windows, `pdfinfo`/poppler availability is unverified** — there's no system-bundled equivalent, and whether to document a manual install or have `install.py` pull in a `pixi`-managed `poppler` package instead is an open question pending real-machine testing (either way, the fallback is the same as elsewhere: chunking is skipped, not an error).
+- `nvidia-smi` or `vulkaninfo` — used only by `estimate.sh`/`estimate.py`'s GPU-detection heuristic, for the time estimate's human-readable message. You don't need to separately install either of these: `nvidia-smi` ships with the NVIDIA driver itself (present automatically if you have a working NVIDIA GPU setup), and `vulkaninfo` comes from `vulkan-tools` (Debian/Ubuntu) or your distro's Vulkan utilities package, often already present on graphics-capable systems. If neither is found, `estimate.sh`/`estimate.py` just assumes CPU and gives a more conservative (slower) estimate — actual conversion still does its own independent, correct GPU detection regardless of what the estimate guessed.
 
 **Not needed by the skill itself:** `git`/`gh` are only involved in *getting* this skill onto disk in the first place (see the parent repo's README) — once installed, none of these scripts invoke either.
+
+## Windows-specific risks (if using the `.py` scripts on native Windows)
+
+These are flagged as things to watch for during real testing, not reasons to avoid trying:
+
+- Whether `pixi add "llama.cpp"` resolves a working Windows build, and whether it includes GPU offload (Vulkan) the way the Linux build does — if not, conversions will still work, just CPU-only and slower.
+- `pdfinfo`/poppler availability (see Prerequisites above) — if missing, auto-chunking is silently skipped, same degrade as on Linux without it.
+- Whether `huggingface_hub`'s actual model-cache location on Windows matches the `~/.cache/huggingface/hub`-style path these scripts assume — if it differs, `uninstall.py --models` may not find everything to remove.
+- General subprocess/file-locking behavior (e.g. antivirus holding a file open) during the chunk-merge/cleanup steps hasn't been exercised on Windows yet.
 
 ## When to use this
 
@@ -34,20 +49,26 @@ Not needed: a short PDF (a few pages) you're only going to look at once — just
 ## Quick start
 
 ```bash
+# Linux / macOS / WSL
 scripts/pdf2md.sh input.pdf                    # -> input/input.md, next to the PDF
 scripts/pdf2md.sh input.pdf --force_ocr         # see "force_ocr or not" below
 scripts/pdf2md.sh input.pdf --output_dir ./out  # explicit output location
+
+# Native Windows (or anywhere else you'd rather use Python)
+python scripts/pdf2md.py input.pdf
+python scripts/pdf2md.py input.pdf --force_ocr
+python scripts/pdf2md.py input.pdf --output_dir ./out
 ```
 
 First call auto-installs a dedicated pixi environment at `~/.local/share/pdf2md-env` (override with `PDF2MD_ENV_DIR`) — this does **not** touch the target project's own files or dependencies. Install takes a few minutes; the ~1.8GB of models download separately, on the **first actual conversion** (install only runs `--help`/`--version` checks, which don't touch them).
 
-Both are one-time costs — but note the model cache (`~/.cache/huggingface`, `~/.cache/datalab`) is **global to the machine, not scoped to `$PDF2MD_ENV_DIR`**. Removing and recreating the environment (e.g. via `uninstall.sh` then reinstalling) won't trigger a re-download; the next conversion just reuses the existing cache. Conversely, if you ever run `uninstall.sh --models`, that clears the cache for *every* environment on the machine that uses these models, not just the one being uninstalled.
+Both are one-time costs — but note the model cache (`~/.cache/huggingface`, `~/.cache/datalab`) is **global to the machine, not scoped to `$PDF2MD_ENV_DIR`**. Removing and recreating the environment (e.g. via `uninstall.sh`/`uninstall.py` then reinstalling) won't trigger a re-download; the next conversion just reuses the existing cache. Conversely, if you ever run `uninstall.sh --models` (or `uninstall.py --models`), that clears the cache for *every* environment on the machine that uses these models, not just the one being uninstalled.
 
 Output layout, for `foo.pdf`: `foo/foo.md` (markdown), `foo/foo_meta.json` (table of contents with page numbers, per-page block counts — see "Citing back into the PDF" below), `foo/_page_N_*.jpeg` (extracted figures/diagrams).
 
 ## Before converting: estimate, and confirm if it's long
 
-**Run `scripts/estimate.sh input.pdf [--force_ocr]` before `pdf2md.sh` whenever the page count is non-trivial (tens of pages or more) or unknown.** It detects GPU vs. CPU and prints a time estimate plus a machine-parseable summary line, without running the actual conversion:
+**Run `scripts/estimate.sh input.pdf [--force_ocr]` (or `python scripts/estimate.py input.pdf [--force_ocr]`) before converting whenever the page count is non-trivial (tens of pages or more) or unknown.** It detects GPU vs. CPU and prints a time estimate plus a machine-parseable summary line, without running the actual conversion:
 
 ```
 $ scripts/estimate.sh thesis.pdf --force_ocr
@@ -118,13 +139,18 @@ This is how you'd answer "what page is X on" or "give me a citation" without re-
   - PyTorch's layout-detection model separately auto-selects **CUDA** specifically (`torch.cuda.is_available()`), which is NVIDIA-only — on AMD/Intel GPUs this step silently falls back to CPU even while `llama-server` is using the GPU fine via Vulkan.
   - Either way, no need to separately install the CUDA Toolkit SDK — the `pixi`-installed PyTorch wheel bundles its own CUDA runtime; you just need a working NVIDIA driver already present for that bundled runtime to find the GPU. No configuration needed for any of this — it's automatic, not something to "fix."
 - **Hybrid CPU (P+E core) machines**: if conversions seem to only use a handful of cores even without a GPU, llama.cpp's thread auto-detect may have badly under-counted — see the note `install.sh` prints after setup, and set `LLAMA_CPP_EXTRA_ARGS="-t N -tb N"` (N = P-core count) in the env's `pixi.toml`. Counterintuitively, using *all* cores (P+E mixed) can be slower than P-cores only, since llama.cpp's decode loop syncs every thread each token and E-cores become the straggler.
-- Env vars for the installed environment: `PDF2MD_ENV_DIR` (default `~/.local/share/pdf2md-env`), `PDF2MD_CHUNK_THRESHOLD` (default 100), `PDF2MD_CHUNK_SIZE` (default 50), `PDF2MD_KEEP_CHUNKS` (unset by default — set to inspect per-chunk raw output after a large conversion).
+- Env vars for the installed environment: `PDF2MD_ENV_DIR` (default `~/.local/share/pdf2md-env`), `PDF2MD_CHUNK_THRESHOLD` (default 100), `PDF2MD_CHUNK_SIZE` (default 50), `PDF2MD_KEEP_CHUNKS` (unset by default — set to inspect per-chunk raw output after a large conversion). Same names and defaults for both the `.sh` and `.py` scripts.
 
 ## Uninstalling
 
 ```bash
+# Linux / macOS / WSL
 scripts/uninstall.sh              # removes the environment at PDF2MD_ENV_DIR
 scripts/uninstall.sh --models     # also removes the ~1.8GB of downloaded models
+
+# Native Windows (or anywhere else you'd rather use Python)
+python scripts/uninstall.py
+python scripts/uninstall.py --models
 ```
 
-Safe to do wholesale (no surgical manifest editing needed) because `install.sh` always creates a fresh, dedicated environment rather than reusing or modifying an existing project's `pixi.toml` — unlike installing marker-pdf directly into a project. Refuses to touch anything that doesn't contain a `pixi.toml`, or that resolves to `$HOME` or `/`, as a guard against a misconfigured `PDF2MD_ENV_DIR`. Models live in shared caches (`~/.cache/datalab`, `~/.cache/huggingface`) outside the environment directory, so they're kept by default even when removing the environment — pass `--models` to also remove them.
+Safe to do wholesale (no surgical manifest editing needed) because `install.sh`/`install.py` always create a fresh, dedicated environment rather than reusing or modifying an existing project's `pixi.toml` — unlike installing marker-pdf directly into a project. Refuses to touch anything that doesn't contain a `pixi.toml`, or that resolves to `$HOME` or `/`, as a guard against a misconfigured `PDF2MD_ENV_DIR`. Models live in shared caches (`~/.cache/datalab`, `~/.cache/huggingface`) outside the environment directory, so they're kept by default even when removing the environment — pass `--models` to also remove them.

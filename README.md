@@ -42,10 +42,10 @@ Note on `local-library`: all 5 of its scripts (`init-library.py`, `count-docs.py
 
 | Skill | Linux | macOS | Windows (native) | WSL |
 |---|---|---|---|---|
-| `pdf-to-markdown` | Working | Not checked yet | Not working | Not checked yet |
+| `pdf-to-markdown` | Working | Not checked yet | Python scripts added, verified behaviorally identical to the `.sh` path on Linux — unverified pending a real Windows-machine test | Not checked yet |
 | `local-library` | Working | Not checked yet | Not checked yet | Not checked yet |
 
-`pdf-to-markdown`'s scripts are bash — native Windows (cmd.exe/PowerShell) can't run a `.sh` file at all, hence "Not working" rather than "not checked yet" for that column specifically. WSL is the documented workaround (see `pdf-to-markdown`'s "Platform check" section) and would likely work since it's a real Linux environment, but that's untested, not assumed — hence its own separate "Not checked yet" rather than lumping it in with native Windows. `local-library`'s own helper scripts are plain Python (no bash dependency), so native Windows is plausible there too — but untested, hence "Not checked yet" rather than assuming it works.
+`pdf-to-markdown` now ships both bash (`.sh`) and Python (`.py`) scripts for every operation (install/uninstall/estimate/convert) — native Windows (cmd.exe/PowerShell) can't run a `.sh` file at all, so the `.py` scripts exist specifically for that case (see `pdf-to-markdown`'s "Platform check" section). They've been checked for behavioral parity against the `.sh` scripts on this Linux machine (same stdout contracts, same chunking/resumability/merge behavior, same guard rails), but real native-Windows execution — pixi's Windows build of `llama.cpp`, `pdfinfo`/poppler availability, HF cache path conventions — hasn't been tried yet, hence "unverified" rather than "Working". WSL is the original documented workaround and would likely work since it's a real Linux environment, but that's untested, not assumed — hence its own separate "Not checked yet". `local-library`'s own helper scripts are plain Python (no bash dependency), so native Windows is plausible there too — but untested, hence "Not checked yet" rather than assuming it works.
 
 ## Prerequisites
 
