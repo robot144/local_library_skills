@@ -60,14 +60,17 @@ What's *not* skill-specific: `git`/`gh` (used only to get a skill's files onto d
 Requires GitHub CLI **v2.90.0+** (`gh skill`, shipped April 2026). Check with `gh --version`; if older or not yet installed, follow [cli.github.com](https://cli.github.com/)'s instructions for your platform — **don't just `apt install gh`** or similar from your distro's default repos, those can be months or years behind (GitHub's own docs warn some community-packaged Debian/Ubuntu builds are outdated enough to be broken). Use the official GitHub-maintained repo/package it links to instead, then re-check `gh --version`.
 
 ```bash
+# Install every skill in this repo at once
+gh skill install robot144/local_library_skills --all 
+
+# Update all installed skills from GitHub
+gh skill update --all
+
 # Install a specific skill for Claude Code, this project only (default scope)
 gh skill install robot144/local_library_skills pdf-to-markdown --agent claude-code
 
 # Same, but available globally in every project
 gh skill install robot144/local_library_skills pdf-to-markdown --agent claude-code --scope user
-
-# Install every skill in this repo at once
-gh skill install robot144/local_library_skills --all --agent claude-code
 ```
 
 Confirmed: `gh skill install` doesn't preserve the executable bit on installed scripts (content is unaffected, just the permission). If a script's own usage docs assume it can be run directly (`scripts/foo.sh ...`) and that fails with "Permission denied", run it once via `bash scripts/foo.sh ...` instead — for `pdf-to-markdown` specifically, `bash scripts/install.sh` self-heals the executable bit on its own sibling scripts, so after that one `bash`-prefixed call, the rest of its documented commands work as written.
