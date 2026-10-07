@@ -1,6 +1,6 @@
 ---
 name: local-library
-description: Build and navigate a structured local folder of documents (papers, reports, manuals) with an index and per-document summaries, optionally paired with searchable markdown versions. Use when the user wants to organize a collection of PDFs/documents for an agent to search and reference later, when adding a new document to an existing library, or when searching/answering from one that already exists (look for a CLAUDE.md that says "start at INDEX.md"). Starts flat (no topic folders) and only introduces them when the user wants to, or when the library has grown past ~20 unsorted documents.
+description: Build and navigate a structured local folder of documents (papers, reports, manuals) with an index and per-document summaries, optionally paired with searchable markdown versions. Use when the user wants to organize a collection of PDFs/documents for an agent to search and reference later, asks to "add this paper to my library," asks "do we have anything about [topic]" or to "summarize what's in my library," or wants to search/answer from one that already exists (look for a CLAUDE.md that says "start at INDEX.md"). Starts flat (no topic folders) and only introduces them when the user wants to, or when the library has grown past ~20 unsorted documents.
 ---
 
 # Local Library
@@ -28,9 +28,14 @@ Organizes a folder of documents into a structure an agent (or a human) can navig
     jones2023_short_description/
       jones2023_short_description.md
       jones2023_short_description_meta.json
+    classical_methods/                                  # a SUBtopic - background/history for optimization/, not a peer topic
+      INDEX.md                                           # same entry format again, just one level deeper
+      smith1970_classical_approach.pdf
   bayesian-methods/
     ...
 ```
+
+Topic folders can themselves contain subtopic folders, same rule, recursively (any directory with its own `INDEX.md`). This is for material that exists specifically *in service of* another topic — e.g. the superseded/historical version of a model that's still actively documented, or foundational background a topic's main documents assume — not for a subject that would stand on its own as a peer topic. See "Nesting: subtopic or sibling topic?" below for how to decide.
 
 `<library-root>` is whatever directory the user is organizing — there's no fixed name (the user's own example used `papers/`, but it's their call, not a requirement).
 
@@ -38,7 +43,17 @@ Organizes a folder of documents into a structure an agent (or a human) can navig
 
 **Topic folders are opt-in, created by the user, not by you.** A brand-new library starts completely flat: every document lives directly at `<library-root>/`, no topic subfolders. Don't create a topic folder on your own initiative. If the user has already created one (e.g. `optimization/`) and a new or existing document looks like a fit, *offer* it — "this looks like it could go in `optimization/` — want me to file it there, somewhere else, or leave it at the top level?" — and let them decide. Never silently move a document into or out of a topic folder.
 
-**Suggest organizing once it's grown.** Run `python3 scripts/count-docs.py <library-root>` rather than counting by hand or trusting a cached number — it reports top-level and per-topic counts and flags when top-level exceeds ~20. If it's crossed, say so and ask whether the user wants to start splitting into topic folders — don't wait to be asked, but don't do it unprompted either.
+**Suggest organizing once it's grown.** Run `python3 scripts/count-docs.py <library-root>` rather than counting by hand or trusting a cached number — it recursively reports top-level, per-topic, and per-subtopic counts (indented by depth), and flags two thresholds: top-level exceeding ~20 (suggest topic folders), and any single topic's *direct* document count exceeding ~50 (suggest splitting that topic into subtopics — see below). Either way: say so and ask, don't wait to be asked, but don't act unprompted either.
+
+## Nesting: subtopic or sibling topic?
+
+When a document (or group of documents) relates to an existing topic, decide whether it belongs *inside* that topic as a subtopic, or *alongside* it as a new sibling topic — same offer-don't-decide rule as topic folders generally, but the judgment call itself:
+
+- **Subtopic** (nest it): the documents exist specifically *in service of* the existing topic, not as an independent subject — e.g. the superseded/historical generation of a model that's still actively maintained under the same name, or foundational background material the topic's main documents assume. Ask something like "these are background for `X/`, not really their own subject — want them nested under it, or should they be a separate topic?"
+- **Sibling topic**: the documents would make sense to someone who's never heard of the existing topic — a genuinely independent subject that merely happens to relate to it.
+- **A topic outgrowing itself**: if `count-docs.py` flags a topic's direct count past ~50, that's a signal the topic itself may be ready to split into subtopics (e.g. by era, sub-model, or method) — same offer, not an automatic action.
+
+This mirrors the top-level threshold's spirit (flat by default, structure added deliberately, offered not imposed) one level down.
 
 ## `CLAUDE.md` vs. topic `INDEX.md`: why only the root auto-loads
 
@@ -100,7 +115,7 @@ Keep summaries honest about what you actually read — if you only skimmed the a
 python3 scripts/show-library.py [path/to/library-root]
 ```
 
-Defaults to `./local_library` if no path is given. Prints the library's title (from `CLAUDE.md`), then one entry per document (name, title, `PDF only`/`PDF+md` status, and its `INDEX.md` summary line) grouped by top-level and by topic folder — a quick "what's in here and is it in good shape" view without reading every `INDEX.md` by hand. It also cross-checks `INDEX.md` against what's actually on disk and flags two kinds of drift: an indexed entry whose PDF is missing, and a PDF present but not yet in any `INDEX.md`. Use this when the user asks what's in a library, wants a status check, or you suspect an entry and the files on disk have drifted apart (e.g. after a manual `rm` or a half-finished "add a document" step).
+Defaults to `./local_library` if no path is given. Prints the library's title (from `CLAUDE.md`), then one entry per document (name, title, `PDF only`/`PDF+md` status, and its `INDEX.md` summary line) grouped by top-level and by topic folder — recursively, so a subtopic nested inside a topic prints indented underneath it, not flattened or missed. A quick "what's in here and is it in good shape" view without reading every `INDEX.md` by hand. It also cross-checks each `INDEX.md` against what's actually on disk and flags two kinds of drift: an indexed entry whose PDF is missing, and a PDF present but not yet in any `INDEX.md`. Use this when the user asks what's in a library, wants a status check, or you suspect an entry and the files on disk have drifted apart (e.g. after a manual `rm` or a half-finished "add a document" step).
 
 ## Browsing a library visually with Quarto
 
@@ -116,7 +131,19 @@ Both scripts default to `./local_library` and are safe to re-run. `init-quarto.p
 
 **Why wrapper pages, not rendering the `.md` files directly:** some marker-converted documents start with a literal `---` line (an OCR'd title-page divider), which Quarto/pandoc misreads as a YAML frontmatter delimiter and fails to render. `sync-quarto-pages.py` generates a thin `<name>.qmd` next to each `<name>.md` with real frontmatter (`title:` pulled from the `INDEX.md` entry) that pulls in the original content via `{{< include <name>.md >}}` — the source `.md` files are never modified, and the sidebar gets a proper title instead of a raw filename. `_quarto.yml`'s `project.render` list is scoped to only these `.qmd` files plus the `INDEX.md`/`CLAUDE.md` index pages, so the raw per-document `.md` files are never rendered as standalone pages (avoiding both the YAML bug and duplicate output).
 
+**The sidebar lists `INDEX.md` pages, not individual documents** — each `INDEX.md` already shows its documents with full context (summary/keywords), so the nav only needs to get you to the right index, not enumerate every document. It mirrors the folder tree exactly: a topic with no subtopics is a flat link; a topic *with* subtopics (e.g. one nested under it for historical background — see "Nesting" above) becomes an expandable section whose header is itself a clickable link to that topic's own `INDEX.md`, with its subtopics listed underneath once expanded. `sync-quarto-pages.py` rebuilds this whole sidebar structure from the current folder tree every run, so a newly-nested subtopic folder shows up correctly next time it's run — no manual sidebar editing needed.
+
 Re-run `sync-quarto-pages.py` (then `pixi run quarto render`, or just let a running `quarto preview` pick up the change) whenever a new document gets a markdown conversion — the wrapper won't exist until then, so the `INDEX.md` entry's markdown link stays pointed at the `.md` file as a plain download link in the meantime, same as any `PDF only` entry.
+
+### Undoing the Quarto setup
+
+```bash
+python3 scripts/clean-quarto.py [path/to/library-root] [--dry-run]
+```
+
+Removes everything `init-quarto.py`/`sync-quarto-pages.py`/`quarto` generated or modified — every `.qmd` wrapper, `pixi.toml`, `_quarto.yml`, `index.qmd`, `styles.css`, `.gitignore`, and the `_site`/`.quarto`/`.pixi` build/cache directories — and reverts `INDEX.md`'s markdown links back from `.qmd` to `.md`, restoring the library to exactly its pre-Quarto state. Never touches document content (`.pdf`, `.md`, images, `_meta.json`). Every file is verified against a content signature before removal, not just matched by filename, so a `pixi.toml`/`.gitignore` that predates the Quarto setup and isn't ours is left alone. Use `--dry-run` first to see what would be removed/reverted without changing anything — and note that dry-run mode must be genuinely side-effect-free; double-check before trusting any variant of this logic if you ever modify it (a prior version of this very script had a bug where `--dry-run` still rewrote the `INDEX.md` links for real).
+
+Useful for checking the full cycle (`init-quarto.py` → `sync-quarto-pages.py` → `quarto render` → `clean-quarto.py` → repeat) still works end-to-end, or just to remove the Quarto site entirely if it's no longer wanted.
 
 ## Searching an existing library
 

@@ -1,6 +1,6 @@
 ---
 name: pdf-to-markdown
-description: Convert a PDF to searchable markdown using marker-pdf, a local GPU/CPU-accelerated OCR pipeline (no API key, no internet needed after first-run model download). Use when a PDF is too large to read page-by-page, when you need to grep/search/cite specific content repeatedly, or when you want its tables and equations as structured markdown/LaTeX rather than page images. Auto-installs its own pixi environment on first use and auto-chunks PDFs of any size. Not a substitute for reading the PDF directly when verifying something that matters — see "Accuracy" below.
+description: Convert a PDF to searchable markdown using marker-pdf, a local GPU/CPU-accelerated OCR pipeline (no API key, no internet needed after first-run model download). Use when the user asks to "convert this PDF to markdown," the PDF is too large to read page-by-page, they need to grep/search/cite specific content repeatedly, or they want its tables and equations as structured markdown/LaTeX rather than page images (e.g. "I need the equations as real LaTeX, not images"). Auto-installs its own pixi environment on first use and auto-chunks PDFs of any size. Not a substitute for reading the PDF directly when verifying something that matters — see "Accuracy" below.
 ---
 
 # PDF to Markdown

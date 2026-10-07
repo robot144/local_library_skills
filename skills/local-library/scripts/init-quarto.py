@@ -36,13 +36,14 @@ project:
     - index.qmd
     - CLAUDE.md
     - INDEX.md
-    - "*/INDEX.md"
+    - "**/INDEX.md"
     - "**/*.qmd"
 
 website:
   title: "Local Library"
   sidebar:
     style: "docked"
+    title: " "
     contents: auto
 
 format:
@@ -57,11 +58,24 @@ STYLES_CSS_TEMPLATE = """\
 .sidebar-item-text {
   font-weight: 600;
 }
+
+/* "Library Index" is always the 2nd top-level sidebar item (right after
+   Home) - make it stand out from the topic entries below it. */
+.sidebar-menu-container > ul.list-unstyled > li.sidebar-item:nth-child(2) .sidebar-item-text {
+  font-size: 1.1em;
+  color: var(--bs-link-color);
+}
+
+.sidebar-menu-container > ul.list-unstyled > li.sidebar-item:nth-child(2) {
+  border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+  padding-bottom: 0.4em;
+  margin-bottom: 0.4em;
+}
 """
 
 INDEX_QMD_TEMPLATE = """\
 ---
-title: "Local Library"
+title: "Home"
 ---
 
 Browse the library structure in the sidebar, or jump straight to:

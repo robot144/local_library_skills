@@ -26,8 +26,24 @@ external service. Start at INDEX.md for the current contents.
 - Topic folders (e.g. `optimization/`) are optional, created deliberately
   rather than automatically. Each has its own `INDEX.md` listing just that
   topic's documents, in the same entry format as the root `INDEX.md`.
+- A topic folder may itself contain subtopic folders (same rule, recursively)
+  — e.g. a historical-background subfolder nested under the topic for the
+  model/subject it's background for, rather than listed as an independent
+  peer topic. Use this when documents exist specifically in service of
+  another topic, not when they'd stand on their own.
 - Filenames follow `<author><year>_<short_description_with_underscores>`,
   e.g. `kalman1960_original_kalman_filter_paper.pdf`.
+
+## Browsing with Quarto (optional)
+
+This library may have a small Quarto browsing site set up alongside the
+documents: `pixi.toml`, `_quarto.yml`, `index.qmd`, `styles.css`, plus a
+`<name>.qmd` wrapper next to each converted document's `<name>.md`. If
+those files are present, `cd` into this directory and run `pixi run
+quarto preview` to browse the whole tree in a browser — sidebar mirrors
+the folder structure, each `INDEX.md` gets its own page. After adding or
+converting more documents, regenerate the wrapper pages and sidebar with
+the local-library skill's `sync-quarto-pages.py` script.
 
 ## Entry format
 

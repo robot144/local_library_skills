@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Generate thin Quarto (.qmd) wrapper pages for every document that has a
 markdown version, repoint each INDEX.md's "markdown" link at the wrapper,
-and rebuild _quarto.yml's sidebar as an explicit flat list (one entry per
-document, grouped under a section per topic) instead of Quarto's folder-
-based "auto" sidebar.
+and rebuild _quarto.yml's sidebar to match the library's folder tree - one
+entry per INDEX.md (root + every topic, at any nesting depth), not one
+per document.
 
 Why a wrapper instead of rendering the .md directly: some marker-converted
 documents start with a literal "---" line (an OCR'd title-page divider),
@@ -15,18 +15,25 @@ source .md files are never modified.
 Why an explicit sidebar instead of "contents: auto": each document's .qmd
 wrapper lives inside that document's own content subfolder (alongside its
 .md, images, and _meta.json - the pdf-to-markdown layout), so Quarto's
-auto-sidebar turns every document into its own folder-with-one-page
-("Top-level documents" worth of folders, each containing one node named
-the same thing). An explicit contents: list flattens that back down to one
-sidebar entry per document, grouped under one section per topic folder.
-Moving the .qmd up a level instead was tried and rejected - it breaks
-image paths, since {{< include >}} does not rewrite relative links.
+auto-sidebar turns every document into its own folder-with-one-page.
+Building the sidebar explicitly from INDEX.md files instead keeps it at
+one entry per topic/subtopic - each INDEX.md already shows its documents
+with full context (summary/keywords), so the nav only needs to get you to
+the right INDEX.md, not list every document. Moving the .qmd up a level
+instead was tried and rejected - it breaks image paths, since
+{{< include >}} does not rewrite relative links.
+
+Nesting: a topic folder may itself contain subtopic folders (same rule,
+recursively - any directory with its own INDEX.md). A topic with no
+subtopics renders as a flat sidebar link; a topic with subtopics renders
+as an expandable section (clickable header via href, plus nested contents
+for each subtopic) so the hierarchy is visible in the sidebar itself.
 
 Usage: python3 sync-quarto-pages.py [path/to/library-root]
 Defaults to ./local_library if no path is given. Safe to re-run - wrapper
 files are regenerated each time (titles stay in sync with INDEX.md), the
 INDEX.md link rewrite is idempotent, and the sidebar is fully rebuilt from
-current INDEX.md contents each run.
+the current folder tree each run.
 """
 import re
 import sys
@@ -49,6 +56,25 @@ def section_title(index_path):
     m = H1_RE.search(text)
     title = m.group(1).strip() if m else index_path.parent.name
     return re.sub(r" — Topic Index$", "", title)
+
+
+def subtopic_index_files(directory):
+    return sorted(
+        p / "INDEX.md" for p in directory.iterdir()
+        if p.is_dir() and (p / "INDEX.md").is_file()
+    )
+
+
+def all_index_files(root):
+    result = [root / "INDEX.md"]
+
+    def walk(directory):
+        for idx in subtopic_index_files(directory):
+            result.append(idx)
+            walk(idx.parent)
+
+    walk(root)
+    return [p for p in result if p.is_file()]
 
 
 def write_wrappers_and_fix_links(index_path):
@@ -92,18 +118,29 @@ def write_wrappers_and_fix_links(index_path):
     return changed
 
 
-def rebuild_sidebar(root, index_files):
-    """Sidebar lists only the INDEX.md pages (root + each topic), not every
-    individual document - each INDEX.md already shows its documents with
-    full context (summary/keywords), so a flat list of entry points into
-    those is enough; no need to also enumerate every document in the nav."""
+def sidebar_node(index_path, root):
+    rel_dir = index_path.parent.relative_to(root)
+    prefix = "" if str(rel_dir) == "." else f"{rel_dir}/"
+    href = f"{prefix}INDEX.md"
+    title = section_title(index_path)
+
+    children = subtopic_index_files(index_path.parent)
+    if not children:
+        return {"text": title, "href": href}
+    return {
+        "section": title,
+        "href": href,
+        "contents": [sidebar_node(child, root) for child in children],
+    }
+
+
+def rebuild_sidebar(root):
     quarto_yml = root / "_quarto.yml"
     config = yaml.safe_load(quarto_yml.read_text(encoding="utf-8"))
 
-    contents = ["index.qmd"]
-    for index_path in index_files:
-        prefix = "" if index_path.parent == root else f"{index_path.parent.name}/"
-        contents.append({"text": section_title(index_path), "href": f"{prefix}INDEX.md"})
+    contents = ["index.qmd", {"text": section_title(root / "INDEX.md"), "href": "INDEX.md"}]
+    for child in subtopic_index_files(root):
+        contents.append(sidebar_node(child, root))
 
     config.setdefault("website", {}).setdefault("sidebar", {})["contents"] = contents
     config["website"]["sidebar"].pop("auto", None)
@@ -121,11 +158,7 @@ def main() -> int:
         return 1
     root = root.resolve()
 
-    index_files = [root / "INDEX.md"]
-    index_files += sorted(
-        d / "INDEX.md" for d in root.iterdir() if d.is_dir() and (d / "INDEX.md").is_file()
-    )
-    index_files = [p for p in index_files if p.is_file()]
+    index_files = all_index_files(root)
 
     total_wrappers = 0
     for index_path in index_files:
@@ -135,8 +168,8 @@ def main() -> int:
         total_wrappers += n
 
     if (root / "_quarto.yml").is_file():
-        rebuild_sidebar(root, index_files)
-        print(f"\nRebuilt sidebar in _quarto.yml ({len(index_files)} sections).")
+        rebuild_sidebar(root)
+        print(f"\nRebuilt sidebar in _quarto.yml ({len(index_files)} INDEX.md pages found).")
     else:
         print("\nNo _quarto.yml found - run init-quarto.py first to scaffold the Quarto project.")
 

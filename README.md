@@ -9,7 +9,23 @@ Each skill lives under `skills/<skill-name>/` with a `SKILL.md` describing when 
 | Skill | Purpose |
 |---|---|
 | [`pdf-to-markdown`](skills/pdf-to-markdown/SKILL.md) | Convert a PDF into searchable markdown (local GPU/CPU OCR via marker-pdf) — for large, scanned, or formula-heavy PDFs where reading page-by-page isn't practical. |
-| [`local-library`](skills/local-library/SKILL.md) | Organize a folder of documents into an indexed, searchable structure (root index, optional user-created topic folders, per-document summaries) — and navigate an existing one. Instructions-only; optionally offers `pdf-to-markdown` for searchable versions if that skill's available. |
+| [`local-library`](skills/local-library/SKILL.md) | Organize a folder of documents into an indexed, searchable structure (root index, optional user-created topic/subtopic folders, per-document summaries) — and navigate an existing one. Optionally offers `pdf-to-markdown` for searchable versions if that skill's available, and an optional Quarto-based browsing site (`init-quarto.py` / `sync-quarto-pages.py`) for visually exploring a library in a browser. |
+
+## Example prompts
+
+Things you can just ask your agent, once the relevant skill is installed:
+
+**`pdf-to-markdown`**
+- "Convert this PDF to markdown so I can search it."
+- "This paper is 400 pages — summarize section 3 for me."
+- "I need the equations from this PDF as real LaTeX, not page images."
+
+**`local-library`**
+- "Add this paper to my local library."
+- "Do we already have anything in the library about [topic]?"
+- "Summarize what's in my library."
+- "This library's getting big — can you organize it into topics?"
+- "Set up a browsable site for my library so I can explore it in a browser."
 
 ## Status
 
@@ -18,16 +34,16 @@ Which skills have actually been exercised against which agent, not just assumed 
 | Skill | claude-cli | codex-cli | copilot-cli | antigravity-cli | mistral-cli |
 |---|---|---|---|---|---|
 | `pdf-to-markdown` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
-| `local-library` | Not checked yet | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
+| `local-library` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
 
-Note on `local-library`: it's almost entirely instructions (classify/summarize/index-writing), not scripts — only its two small helpers (`init-library.py`, `count-docs.py`) have actually been run and verified so far, not the skill's core workflows (classifying a document, writing an entry, searching). "Not checked yet" reflects that, not just an untested install.
+Note on `local-library`: all 5 of its scripts (`init-library.py`, `count-docs.py`, `show-library.py`, `init-quarto.py`, `sync-quarto-pages.py`) have been run and verified, and the skill's core workflows (classifying/adding documents, writing entries, organizing into topic and nested subtopic folders, searching, visual browsing via the generated Quarto site) have all been exercised extensively in practice on a real, ~90-document library — not just a synthetic test case.
 
 ### By OS
 
 | Skill | Linux | macOS | Windows (native) | WSL |
 |---|---|---|---|---|
 | `pdf-to-markdown` | Working | Not checked yet | Not working | Not checked yet |
-| `local-library` | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
+| `local-library` | Working | Not checked yet | Not checked yet | Not checked yet |
 
 `pdf-to-markdown`'s scripts are bash — native Windows (cmd.exe/PowerShell) can't run a `.sh` file at all, hence "Not working" rather than "not checked yet" for that column specifically. WSL is the documented workaround (see `pdf-to-markdown`'s "Platform check" section) and would likely work since it's a real Linux environment, but that's untested, not assumed — hence its own separate "Not checked yet" rather than lumping it in with native Windows. `local-library`'s own helper scripts are plain Python (no bash dependency), so native Windows is plausible there too — but untested, hence "Not checked yet" rather than assuming it works.
 
