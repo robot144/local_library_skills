@@ -94,6 +94,10 @@ The `<name>_meta.json` file is worth knowing about beyond just being "metadata" 
 
 If you've read `pdf-to-markdown`'s own `SKILL.md`, its "Accuracy" section applies here too — a markdown version in this library is a search aid, not a replacement for the source PDF when something load-bearing needs verifying.
 
+## Carrying over Xournal++ annotation files (`.xopp`)
+
+If a PDF being added has a matching `<name>.xopp` sitting next to it (personal annotations made in [Xournal++](https://xournalpp.github.io/)), copy it into the library alongside the renamed PDF, keeping the same base name (`<name>.xopp` next to `<name>.pdf`) — same treatment as a markdown version, just carried over rather than generated. If a `.xopp` turns up with no matching PDF, don't silently drop it — flag it to the user; the PDF it annotates may just be sitting elsewhere.
+
 ## Entry format
 
 One entry per document, in whichever `INDEX.md` it belongs to (a topic's, or the root's for unassigned top-level documents) — same format either way:
@@ -104,7 +108,7 @@ One entry per document, in whichever `INDEX.md` it belongs to (a topic's, or the
 **Summary:** two to four sentences — what the document is about and why it's here.
 **Keywords:** comma, separated, terms, for, matching, a, later, query
 **Key results:** the one or two things worth knowing without opening the document
-**Files:** [PDF](kalman1960_original_kalman_filter_paper.pdf) · [markdown](kalman1960_original_kalman_filter_paper/kalman1960_original_kalman_filter_paper.md) *(if a markdown version exists)*
+**Files:** [PDF](kalman1960_original_kalman_filter_paper.pdf) · [markdown](kalman1960_original_kalman_filter_paper/kalman1960_original_kalman_filter_paper.md) *(if a markdown version exists)* · [Xournal++ annotations](kalman1960_original_kalman_filter_paper.xopp) *(if a `.xopp` exists)*
 ```
 
 Keep summaries honest about what you actually read — if you only skimmed the abstract, the summary should reflect that level of confidence, not imply you read the whole document.

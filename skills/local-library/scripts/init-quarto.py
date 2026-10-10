@@ -4,16 +4,35 @@
 the folder tree), and index.qmd (landing page). Never overwrites a file
 that already exists.
 
+For the pixi.toml specifically: if the library root doesn't already have
+one, this searches upward through ancestor directories for an existing
+pixi.toml (e.g. a project root one level up) and merges the `quarto`
+dependency into *that* one instead of creating a new, separate manifest at
+the library root. Only falls back to creating a fresh one if no ancestor
+manifest exists. This avoids leaving a second, incomplete pixi.toml nested
+inside a project that already has one - `pixi run` picks whichever
+manifest is nearest to the current directory with no fallback to a parent,
+so a nested manifest that's missing a dependency the outer one has (e.g.
+`python`) silently shadows the working one for anything run from inside
+the library, which can be a nasty surprise, especially if a `python3`
+shim on PATH re-invokes `pixi run python` - see the `python3`-shim note in
+SKILL.md's Quarto section.
+
 After scaffolding, run `python3 sync-quarto-pages.py <library-root>` (and
 re-run after converting more PDFs to markdown) to generate the per-document
 .qmd wrapper pages, then `cd <library-root> && pixi install && pixi run
-quarto preview`.
+quarto preview` - this works whether the manifest lives in the library root
+or an ancestor directory, since `pixi` itself searches upward too.
 
 Usage: python3 init-quarto.py [path/to/library-root]
 Defaults to ./local_library if no path is given.
 """
+import re
 import sys
 from pathlib import Path
+
+QUARTO_DEP_MARKER = "# added by local-library init-quarto.py"
+QUARTO_KEY_RE = re.compile(r"^\s*quarto\s*=", re.MULTILINE)
 
 DEFAULT_ROOT = "local_library"
 
@@ -101,6 +120,44 @@ def write_if_missing(path: Path, content: str) -> None:
         print(f"==> Created {path}")
 
 
+def merge_quarto_into(manifest: Path) -> str:
+    """Add the quarto dependency to an existing pixi.toml. Returns 'added'
+    or 'already-present' (idempotent - safe to call on every run)."""
+    text = manifest.read_text(encoding="utf-8")
+    if QUARTO_KEY_RE.search(text):
+        return "already-present"
+    line = f'quarto = ">=1.9,<2"  {QUARTO_DEP_MARKER}'
+    if "[dependencies]" in text:
+        text = text.replace("[dependencies]", f"[dependencies]\n{line}", 1)
+    else:
+        text = text.rstrip("\n") + f"\n\n[dependencies]\n{line}\n"
+    manifest.write_text(text, encoding="utf-8")
+    return "added"
+
+
+def setup_pixi_manifest(root: Path) -> Path:
+    """Return the pixi.toml that will provide the quarto dependency: the
+    library's own if one already exists there; otherwise the nearest
+    ancestor manifest (quarto merged in); otherwise a newly-created one at
+    the library root."""
+    own = root / "pixi.toml"
+    if own.is_file():
+        print(f"==> pixi.toml already exists, leaving it untouched: {own}")
+        return own
+
+    for d in root.parents:
+        candidate = d / "pixi.toml"
+        if candidate.is_file():
+            status = merge_quarto_into(candidate)
+            verb = "Added quarto to" if status == "added" else "quarto already present in"
+            print(f"==> {verb} existing manifest: {candidate}")
+            return candidate
+
+    own.write_text(PIXI_TOML_TEMPLATE, encoding="utf-8")
+    print(f"==> Created {own}")
+    return own
+
+
 def main() -> int:
     root = Path(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_ROOT)
     if not root.is_dir():
@@ -108,14 +165,15 @@ def main() -> int:
         return 1
     root = root.resolve()
 
-    write_if_missing(root / "pixi.toml", PIXI_TOML_TEMPLATE)
+    manifest = setup_pixi_manifest(root)
     write_if_missing(root / "_quarto.yml", QUARTO_YML_TEMPLATE)
     write_if_missing(root / "index.qmd", INDEX_QMD_TEMPLATE)
     write_if_missing(root / "styles.css", STYLES_CSS_TEMPLATE)
     write_if_missing(root / ".gitignore", GITIGNORE_TEMPLATE)
 
     print(
-        f"\nDone. Next steps:\n"
+        f"\nDone. Quarto environment: {manifest}\n"
+        f"Next steps:\n"
         f"  python3 sync-quarto-pages.py {root}\n"
         f"  cd {root} && pixi install && pixi run quarto preview"
     )

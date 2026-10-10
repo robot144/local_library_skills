@@ -27,10 +27,30 @@ from pathlib import Path
 
 DEFAULT_ROOT = "local_library"
 MD_LINK_QMD_RE = re.compile(r"\[markdown\]\((?P<name>[^/]+)/(?P=name)\.qmd\)")
+QUARTO_DEP_LINE_RE = re.compile(r"\n?^.*# added by local-library init-quarto\.py\s*$\n?", re.MULTILINE)
 
 
 def is_our_pixi_toml(path):
     return path.is_file() and 'name = "local-library-quarto"' in path.read_text(encoding="utf-8")
+
+
+def strip_merged_quarto_dep(root, dry_run):
+    """If init-quarto.py merged the quarto dependency into an ancestor's
+    pixi.toml instead of creating a fresh one at the library root (see
+    init-quarto.py), surgically remove just that one line - never delete or
+    otherwise touch a manifest this library doesn't fully own. Returns the
+    manifest path touched, or None."""
+    if (root / "pixi.toml").is_file():
+        return None  # library has its own manifest - handled by is_our_pixi_toml above
+    for d in root.parents:
+        candidate = d / "pixi.toml"
+        if candidate.is_file():
+            text = candidate.read_text(encoding="utf-8")
+            new_text, n = QUARTO_DEP_LINE_RE.subn("\n", text, count=1)
+            if n and not dry_run:
+                candidate.write_text(new_text, encoding="utf-8")
+            return candidate if n else None
+    return None
 
 
 def is_our_quarto_yml(path):
@@ -97,6 +117,7 @@ def main() -> int:
                 shutil.rmtree(path)
 
     remove_file(root / "pixi.toml", is_our_pixi_toml)
+    merged_manifest = strip_merged_quarto_dep(root, dry_run)
     remove_file(root / "_quarto.yml", is_our_quarto_yml)
     remove_file(root / "index.qmd", is_our_index_qmd)
     remove_file(root / "styles.css", is_our_styles_css)
@@ -121,6 +142,10 @@ def main() -> int:
     label = "Would remove" if dry_run else "Removed"
     for path in sorted(set(removed)):
         print(f"{label}: {path.relative_to(root.parent)}")
+
+    if merged_manifest:
+        verb2 = "Would remove" if dry_run else "Removed"
+        print(f"{verb2} merged quarto dependency from: {merged_manifest}")
 
     verb = "Would revert" if dry_run else "Reverted"
     print(f"{verb} {reverted} .qmd markdown link(s) back to .md in INDEX.md files.")
