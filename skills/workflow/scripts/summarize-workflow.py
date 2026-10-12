@@ -2,14 +2,18 @@
 """Summarize a Snakemake workflow root: purpose (from CLAUDE.md), declared
 rules (from rules/*.smk, cross-checked against the Snakefile's include:
 lines), and per-case status inferred from scratch/, outputs/, and logs/
-subdirectories - a quick "what's in here and is it in good shape" view.
-Pure directory/text introspection - doesn't need Snakemake installed or
-invoked, so it works even before `pixi install`.
+subdirectories - a quick "what's in here and is it in good shape" view. By
+default this is pure directory/text introspection, so it works even before
+`pixi install`. Pass --snakemake-summary TARGET for Snakemake's target-
+specific generated-file status table.
 
 Usage: python3 summarize-workflow.py [path/to/workflow-root]
+       [--snakemake-summary TARGET]
 Defaults to ./workflow if no path is given.
 """
+import argparse
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -64,8 +68,50 @@ def top_level_file_count(path: Path) -> int:
     return sum(1 for p in path.iterdir() if p.is_file() and p.name != ".gitkeep")
 
 
+def snakemake_summary(root: Path, target: str) -> int:
+    """Print Snakemake's generated-file status for one explicit target."""
+    try:
+        completed = subprocess.run(
+            ["pixi", "run", "snakemake", "--summary", target],
+            cwd=root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        print(
+            "error: '--snakemake-summary' requires the 'pixi' command",
+            file=sys.stderr,
+        )
+        return 1
+
+    print(f"\nSnakemake generated-file status (target: {target}):")
+    if completed.stdout:
+        print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
+    if completed.stderr:
+        print(completed.stderr, file=sys.stderr, end="")
+    if completed.returncode:
+        print(
+            f"error: Snakemake summary failed with exit code {completed.returncode}",
+            file=sys.stderr,
+        )
+    return completed.returncode
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("root", nargs="?", default=DEFAULT_ROOT)
+    parser.add_argument(
+        "--snakemake-summary",
+        metavar="TARGET",
+        help="also run 'pixi run snakemake --summary TARGET' in the workflow root",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
-    root = Path(sys.argv[1] if len(sys.argv) > 1 else DEFAULT_ROOT)
+    args = parse_args()
+    root = Path(args.root)
     if not root.is_dir():
         print(f"error: not a directory: {root}", file=sys.stderr)
         return 1
@@ -123,6 +169,8 @@ def main() -> int:
                 flag = "  <- ran but no kept output yet"
             print(f"  {case}: {marks}{flag}")
 
+    if args.snakemake_summary:
+        return snakemake_summary(root, args.snakemake_summary)
     return 0
 
 

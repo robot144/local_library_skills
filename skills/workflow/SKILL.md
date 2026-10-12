@@ -147,6 +147,19 @@ false "missing output" flag. Confirmed by testing: a workflow with a flat
 no kept output yet," which was wrong — fixed by excluding flat folders from
 the per-case check entirely, not just from the display.
 
+For Snakemake's own target-specific generated-file status, explicitly opt
+into a second, environment-dependent section:
+
+```bash
+python3 scripts/summarize-workflow.py [path/to/workflow-root] \
+  --snakemake-summary <target>
+```
+
+This runs `pixi run snakemake --summary <target>` in the workflow root and
+reports each output's producing rule, log, status, and update plan. It is
+deliberately opt-in: unlike the default summary, it requires a working Pixi
+environment and asks Snakemake to resolve the selected target.
+
 ## Adding a rule
 
 1. **Understand the step first** — its real inputs, outputs, and
@@ -190,9 +203,35 @@ long-running.
    real. Don't silently kick off a long pipeline the user didn't explicitly
    sign off on.
 3. **Run for real**: `snakemake --cores N [target]`, once confirmed.
-4. **Visualizing the DAG** (`snakemake --dag | dot -Tsvg > dag.svg`, or
-   equivalent) is worth offering when the user wants to *see* the pipeline
-   structure, not just run it.
+4. **Visualizing the DAG** is worth offering when the user wants to *see*
+   the pipeline structure, not just run it — see "Visualizing a DAG" below.
+
+## Visualizing a DAG
+
+Use an explicit target so the graph represents the actual requested work:
+
+```bash
+pixi run snakemake --dag <target> > dag.dot          # expanded job DAG
+pixi run snakemake --rulegraph <target> > rules.dot  # one node per rule
+pixi run snakemake --filegraph <target> > files.dot  # files and rules
+```
+
+DOT is Snakemake's exact graph representation. If Graphviz is available,
+render it to an SVG with `dot -Tsvg dag.dot > dag.svg`. Do not offer an
+ASCII terminal renderer unless the workflow explicitly declares and installs
+one as a reproducible dependency.
+
+For a Markdown document that renders in GitHub, VS Code, Quarto, or another
+Mermaid-capable renderer, use the helper:
+
+```bash
+python3 scripts/render-workflow-dag.py [path/to/workflow-root] \
+  --target <target> --output DAG.md
+```
+
+It invokes `pixi run snakemake --dag <target>` and writes an expanded
+Mermaid flowchart. Use `--format dot` when a downstream Graphviz or DOT tool
+needs the native graph instead.
 
 ## Cleaning up
 
