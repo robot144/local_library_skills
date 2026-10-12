@@ -1,0 +1,3 @@
+# Parameters your rules read via config["..."]. Fill in as rules need them.
+# (Must stay a mapping - Snakemake's configfile: rejects an empty/null file.)
+{}

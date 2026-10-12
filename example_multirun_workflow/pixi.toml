@@ -1,0 +1,17 @@
+[workspace]
+name = "workflow"
+version = "0.1.0"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+# python is listed explicitly (not left to snakemake-minimal's transitive
+# dependency) so this manifest is self-contained: `pixi run`/`pixi install`
+# always use the *nearest* pixi.toml walking up from cwd, with no merging
+# from a parent manifest, so a workflow nested inside a project that has
+# its own pixi.toml (e.g. this skill's own repo) must not depend on
+# anything from that outer manifest to function.
+python = ">=3.10,<3.14"
+snakemake-minimal = ">=8,<9"
+# Swap to `snakemake = ">=8,<9"` instead if you need the extra reporting/
+# plotting dependencies snakemake-minimal leaves out.

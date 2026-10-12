@@ -1,0 +1,11 @@
+configfile: "config.yaml"
+
+EXPRESSIONS_FILE = "data/expressions.txt"
+
+with open(EXPRESSIONS_FILE) as f:
+    N_EXPRESSIONS = sum(1 for line in f if line.strip())
+CASES = [str(i) for i in range(N_EXPRESSIONS)]
+
+include: "rules/split_expressions.smk"
+include: "rules/compute_expression.smk"
+include: "rules/collect_results.smk"
