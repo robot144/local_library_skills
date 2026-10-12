@@ -1,0 +1,153 @@
+---
+title: "Active Learning Prototype — Week of 5–9 October 2026"
+author: "[Author]"
+date: today
+format: html
+toc: true
+toc-depth: 2
+reporting-skill-doc: v1
+reporting-skill-kind: report
+---
+
+```{python}
+#| echo: false
+# Synthetic test function for this week's prototype: the sum of two
+# Gaussians in 2D, each later code chunk reuses f/X/Y/Z rather than
+# redefining them.
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib import cm
+
+mu1, sigma1 = np.array([-1.5, -1.5]), 1.0
+mu2, sigma2 = np.array([2.0, 2.0]), 1.0
+
+
+def gaussian_2d(x, y, mu, sigma):
+    dx = x - mu[0]
+    dy = y - mu[1]
+    return np.exp(-0.5 * (dx**2 + dy**2) / sigma**2)
+
+
+def f(x, y):
+    return gaussian_2d(x, y, mu1, sigma1) + gaussian_2d(x, y, mu2, sigma2)
+
+
+x = np.linspace(-5, 5, 100)
+y = np.linspace(-5, 5, 100)
+X, Y = np.meshgrid(x, y)
+Z = f(X, Y)
+```
+
+## Summary
+
+Started a Python prototype for active learning this week. Tried it on a
+synthetic 2D test function — the sum of two Gaussians — sampling only
+from the first Gaussian to see how that one-sided sampling shows up in
+the function's contours.
+
+## Introduction
+
+Before running active learning on a real problem, a synthetic test case
+with a known, simple structure is useful for checking the prototype
+behaves as expected. A 2D function with two separate Gaussian "bumps"
+gives a case with two distinct regions of interest, one of which can be
+deliberately under-sampled to check that the prototype would need
+exploration to find it.
+
+## Methods
+
+Test function: the sum of two 2D Gaussians,
+
+$$f(x, y) = \exp\left(-\frac{\lVert (x,y) - \mu_1 \rVert^2}{2\sigma_1^2}\right) + \exp\left(-\frac{\lVert (x,y) - \mu_2 \rVert^2}{2\sigma_2^2}\right)$$
+
+with $\mu_1 = (-1.5, -1.5)$ and $\mu_2 = (2, 2)$, both with $\sigma = 1$.
+Samples were drawn from the first Gaussian only ($\mu_1$), not the
+function as a whole, to simulate a one-sided initial sample set.
+
+```{python}
+#| echo: false
+rng = np.random.default_rng(42)
+n_samples = 40
+samples = rng.normal(loc=mu1, scale=sigma1, size=(n_samples, 2))
+```
+
+A simple dense (fully-connected) network was then trained on just these
+samples and their true function values, to see what the prototype's
+function estimate looks like given only this one-sided sample set:
+
+```{python}
+from sklearn.neural_network import MLPRegressor
+
+z_samples = f(samples[:, 0], samples[:, 1])
+
+model = MLPRegressor(
+    hidden_layer_sizes=(32, 32),
+    activation="relu",
+    max_iter=5000,
+    random_state=42,
+)
+model.fit(samples, z_samples)
+
+Z_est = model.predict(np.column_stack([X.ravel(), Y.ravel()])).reshape(X.shape)
+```
+
+## Results
+
+Surface plot of the dense network's estimate, trained on the
+first-Gaussian samples only:
+
+```{python}
+fig = plt.figure(figsize=(7, 5))
+ax = fig.add_subplot(111, projection="3d")
+ax.plot_surface(X, Y, Z_est, cmap=cm.viridis, linewidth=0, antialiased=True)
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+ax.set_zlabel("estimated f(x, y)")
+ax.set_title("Dense network estimate (trained on first-Gaussian samples only)")
+plt.show()
+```
+
+For comparison, the surface plot of the full test function, both
+Gaussians visible:
+
+```{python}
+fig = plt.figure(figsize=(7, 5))
+ax = fig.add_subplot(111, projection="3d")
+ax.plot_surface(X, Y, Z, cmap=cm.viridis, linewidth=0, antialiased=True)
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+ax.set_zlabel("f(x, y)")
+ax.set_title("Sum of two Gaussians")
+plt.show()
+```
+
+Samples (drawn from the first Gaussian only) over the function's 2D
+contours:
+
+```{python}
+fig, ax = plt.subplots(figsize=(6, 6))
+contours = ax.contour(X, Y, Z, levels=10, cmap=cm.viridis)
+ax.clabel(contours, inline=True, fontsize=8)
+ax.scatter(samples[:, 0], samples[:, 1], color="red", s=20, label="samples (first Gaussian only)")
+ax.set_xlabel("x")
+ax.set_ylabel("y")
+ax.set_title("Samples and contours of f(x, y)")
+ax.legend()
+plt.show()
+```
+
+## Discussion
+
+Samples cluster tightly around the first Gaussian's peak, as expected —
+the second Gaussian's region has no samples at all despite contributing
+equally to the function. This is exactly the gap an active learning
+strategy should be able to detect and correct for by proposing samples
+there, which the prototype hasn't been asked to do yet this week.
+
+## Conclusions
+
+The prototype runs end-to-end on this synthetic case and the one-sided
+sampling behaves as designed. Next step: use this same test function to
+check whether the active learning criterion actually proposes samples
+near the second Gaussian once it's given the chance to choose where to
+sample next.

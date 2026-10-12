@@ -1,6 +1,6 @@
 # local_library_skills
 
-Skills for coding agents (e.g. Claude Code) to support a **local library**: a folder of documents you want an agent to search, read, reference, and work with directly on disk — no external service, no re-uploading files into a chat each time.
+**Research skills** for coding agents (e.g. Claude Code) — working directly on disk, no external service, no re-uploading files into a chat each time: converting PDFs to searchable markdown ([`pdf-to-markdown`](skills/pdf-to-markdown/SKILL.md)), organizing a local library of documents ([`local-library`](skills/local-library/SKILL.md)), scaffolding and running reproducible Snakemake workflows ([`workflow`](skills/workflow/SKILL.md)), and authoring Quarto reports/logs ([`reporting`](skills/reporting/SKILL.md)). The repo's name reflects where this started — a local-library toolkit — not its current scope; see [`plan.md`](plan.md) for how that's evolved and what's still being scoped out.
 
 Each skill lives under `skills/<skill-name>/` with a `SKILL.md` describing when and how to use it, plus any scripts it needs. Drop this repo (or the specific skill directories you want) wherever your agent loads skills from, per that agent's own conventions.
 
@@ -11,6 +11,7 @@ Each skill lives under `skills/<skill-name>/` with a `SKILL.md` describing when 
 | [`pdf-to-markdown`](skills/pdf-to-markdown/SKILL.md) | Convert a PDF into searchable markdown (local GPU/CPU OCR via marker-pdf) — for large, scanned, or formula-heavy PDFs where reading page-by-page isn't practical. |
 | [`local-library`](skills/local-library/SKILL.md) | Organize a folder of documents into an indexed, searchable structure (root index, optional user-created topic/subtopic folders, per-document summaries) — and navigate an existing one. Optionally offers `pdf-to-markdown` for searchable versions if that skill's available, and an optional Quarto-based browsing site (`init-quarto.py` / `sync-quarto-pages.py`) for visually exploring a library in a browser. |
 | [`workflow`](skills/workflow/SKILL.md) | Scaffold and extend reproducible research workflows using [Snakemake](https://snakemake.github.io/) — domain-agnostic (simulations, data processing, batch per-case runs). Ships `init-workflow.py` (scaffold), `clean-workflow.py` (empty disposable `scratch/`, or everything generated with `--all`), and `summarize-workflow.py` (purpose, rule drift, per-case status). |
+| [`reporting`](skills/reporting/SKILL.md) | Author and render one-off research documents (reports, ongoing-work logs) using [Quarto](https://quarto.org/) — domain-agnostic, standalone, HTML or PDF output. Ships `init-quarto.py` (scaffold from a `report`/`log` template, `--format html\|pdf`), `find-docs.py` (locate every document this skill created, anywhere), and `clean-docs.py` (remove render output, optionally `--all` for local caches too). |
 
 ## Example prompts
 
@@ -34,6 +35,12 @@ Things you can just ask your agent, once the relevant skill is installed:
 - "Run this model for every file in this folder, then collect the results."
 - "Clean up the scratch files from this workflow's old runs."
 
+**`reporting`**
+- "Write a report on these results."
+- "Start a log of this work."
+- "Summarize my progress in a log."
+- "Is there already a report or log for X?"
+
 ## Status
 
 Which skills have actually been exercised against which agent, not just assumed to work because the directory convention matches.
@@ -43,10 +50,13 @@ Which skills have actually been exercised against which agent, not just assumed 
 | `pdf-to-markdown` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
 | `local-library` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
 | `workflow` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
+| `reporting` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
 
 Note on `local-library`: all 5 of its scripts (`init-library.py`, `count-docs.py`, `show-library.py`, `init-quarto.py`, `sync-quarto-pages.py`) have been run and verified, and the skill's core workflows (classifying/adding documents, writing entries, organizing into topic and nested subtopic folders, searching, visual browsing via the generated Quarto site) have all been exercised extensively in practice on a real, ~90-document library — not just a synthetic test case.
 
 Note on `workflow`: both scripts (`init-workflow.py`, `clean-workflow.py`) and the core rule patterns (`shell:` vs. `script:` rules, a staged-per-case `scratch/` pattern, and `scratch`-only vs. `--all` cleaning) have been exercised against two real, actually-executed Snakemake workflows — a simple two-step pipeline and a four-case parallel compute-then-collect pipeline — including a full scaffold → run → clean → force-rerun cycle, not just read through.
+
+Note on `reporting`: all three scripts (`init-quarto.py`, `find-docs.py`, `clean-docs.py`), both templates (`report`, `log`), and both output formats (`html`, `pdf`) have been scaffolded, installed, actually rendered via a real Quarto/Jupyter/TinyTeX environment, and cleaned up again — merging into a pre-existing root `pixi.toml` rather than creating a nested one — not just read through. Real bugs were caught and fixed by this testing, each only found by actually running the thing: a missing `jupyter` dependency (needed for Quarto to execute the `report` template's Python code chunk, not just `quarto` itself); angle-bracket placeholders (`<Report title>`) that silently rendered as blank, invalid HTML tags instead of visible text; `find-docs.py` initially listing the skill's own bundled templates as if they were real user documents; `clean-docs.py`'s `--all` initially being an unscoped tree-wide search that would have deleted other projects' and the repository's own shared `.pixi/` environments before being caught in `--dry-run` and scoped down to a document's own directory only; and PDF rendering requiring Quarto's own TinyTeX (conda-forge's `texlive-core` alone is missing `lualatex` and has a broken `pdflatex`) plus `xz` as a real `pixi.toml` dependency (TinyTeX's own extraction step fails without it in this sandboxed container).
 
 ### By OS
 
@@ -55,12 +65,13 @@ Note on `workflow`: both scripts (`init-workflow.py`, `clean-workflow.py`) and t
 | `pdf-to-markdown` | Working | Not checked yet | Python scripts added, verified behaviorally identical to the `.sh` path on Linux — unverified pending a real Windows-machine test | Not checked yet |
 | `local-library` | Working | Not checked yet | Not checked yet | Not checked yet |
 | `workflow` | Working | Not checked yet | Not checked yet | Not checked yet |
+| `reporting` | Working | Not checked yet | Not checked yet | Not checked yet |
 
 `pdf-to-markdown` now ships both bash (`.sh`) and Python (`.py`) scripts for every operation (install/uninstall/estimate/convert) — native Windows (cmd.exe/PowerShell) can't run a `.sh` file at all, so the `.py` scripts exist specifically for that case (see `pdf-to-markdown`'s "Platform check" section). They've been checked for behavioral parity against the `.sh` scripts on this Linux machine (same stdout contracts, same chunking/resumability/merge behavior, same guard rails), but real native-Windows execution — pixi's Windows build of `llama.cpp`, `pdfinfo`/poppler availability, HF cache path conventions — hasn't been tried yet, hence "unverified" rather than "Working". WSL is the original documented workaround and would likely work since it's a real Linux environment, but that's untested, not assumed — hence its own separate "Not checked yet". `local-library`'s own helper scripts are plain Python (no bash dependency), so native Windows is plausible there too — but untested, hence "Not checked yet" rather than assuming it works.
 
 ## Prerequisites
 
-Prerequisites are per-skill, not repo-wide — each skill's own `SKILL.md` has the details (required vs. optional, what degrades gracefully if something's missing, install commands for anything not already in a CliCodingAgents container). See [`pdf-to-markdown`'s Prerequisites](skills/pdf-to-markdown/SKILL.md#prerequisites) for the most detailed example. `workflow` needs only [`pixi`](https://pixi.sh/) (same as this repo's own convention) — its scaffolded `pixi.toml` pulls in Snakemake itself, with no optional/degrading dependencies of its own.
+Prerequisites are per-skill, not repo-wide — each skill's own `SKILL.md` has the details (required vs. optional, what degrades gracefully if something's missing, install commands for anything not already in a CliCodingAgents container). See [`pdf-to-markdown`'s Prerequisites](skills/pdf-to-markdown/SKILL.md#prerequisites) for the most detailed example. `workflow` needs only [`pixi`](https://pixi.sh/) (same as this repo's own convention) — its scaffolded `pixi.toml` pulls in Snakemake itself, with no optional/degrading dependencies of its own. `reporting` likewise needs only `pixi` for HTML output (its scaffolded `pixi.toml` pulls in Quarto/Jupyter); PDF output additionally needs a one-time `quarto install tinytex` (not a pixi dependency — see `reporting`'s own "PDF output" section).
 
 What's *not* skill-specific: `git`/`gh` (used only to get a skill's files onto disk in the first place — see Installation below, not by the skills themselves once installed).
 

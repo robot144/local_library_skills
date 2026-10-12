@@ -1,0 +1,43 @@
+---
+title: "[Report title]"
+author: "[Author]"
+date: today
+format: html
+toc: true
+toc-depth: 2
+reporting-skill-doc: v1
+reporting-skill-kind: report
+---
+
+```{python}
+#| echo: false
+# Point this at whatever the report is actually about - a workflow's
+# outputs/, a local-library document, anything else. Reference this path
+# from later code chunks rather than hardcoding paths throughout the
+# document, so it's obvious later what this report was built from.
+data_path = "path/to/your/data"
+```
+
+## Summary
+
+<!-- One paragraph: the headline result or finding. -->
+
+## Introduction
+
+<!-- Why this report exists - the question being answered. -->
+
+## Methods
+
+<!-- How the result was produced - data sources, workflow, code. -->
+
+## Results
+
+<!-- What was found - tables/figures go here. -->
+
+## Discussion
+
+<!-- What the results mean, limitations, caveats. -->
+
+## Conclusions
+
+<!-- The takeaway. -->

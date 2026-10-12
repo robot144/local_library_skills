@@ -1,0 +1,48 @@
+---
+title: "Math functions and derivatives"
+author: "Gauss"
+date: today
+format: html
+toc: true
+toc-depth: 2
+reporting-skill-doc: v1
+reporting-skill-kind: log
+---
+
+<!-- One section per time block - defaults to one day, as below. Switch to
+     weekly (or whatever granularity fits) if daily doesn't make sense for
+     this particular log; it's a default, not a hard rule. Add a new
+     section for each new block, most recent last (or first, if you'd
+     rather read newest-on-top - pick one and stay consistent). -->
+
+## 2026-10-11
+
+- Worked on plotting sin(x).
+
+```{python}
+import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 2 * np.pi, 200)
+plt.plot(x, np.sin(x))
+plt.title("sin(x)")
+plt.xlabel("x")
+plt.ylabel("sin(x)")
+plt.show()
+```
+
+## 2026-10-12
+
+- Worked on plotting cos(x).
+- Derivatives:
+  $$\frac{d}{dx}\sin(x) = \cos(x)$$
+  $$\frac{d}{dx}\cos(x) = -\sin(x)$$
+
+```{python}
+x = np.linspace(0, 2 * np.pi, 200)
+plt.plot(x, np.cos(x))
+plt.title("cos(x)")
+plt.xlabel("x")
+plt.ylabel("cos(x)")
+plt.show()
+```

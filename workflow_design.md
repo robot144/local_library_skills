@@ -1,8 +1,9 @@
 # Design: `workflow` skill (Snakemake)
 
-Status: design phase — not yet implemented. Structure below is converged
-through discussion (including a worked example); scripts/SKILL.md content
-still to be written.
+Status: implemented. See [`skills/workflow/SKILL.md`](skills/workflow/SKILL.md)
+for the skill itself (`init-workflow.py`, `clean-workflow.py`,
+`summarize-workflow.py`) — this file remains the design record (worked
+example, rationale, open questions) behind those decisions.
 
 ## Purpose
 

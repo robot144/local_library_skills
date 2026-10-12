@@ -1,0 +1,20 @@
+---
+title: "[Log title]"
+author: "[Author]"
+date: today
+format: html
+toc: true
+toc-depth: 2
+reporting-skill-doc: v1
+reporting-skill-kind: log
+---
+
+<!-- One section per time block - defaults to one day, as below. Switch to
+     weekly (or whatever granularity fits) if daily doesn't make sense for
+     this particular log; it's a default, not a hard rule. Add a new
+     section for each new block, most recent last (or first, if you'd
+     rather read newest-on-top - pick one and stay consistent). -->
+
+## [YYYY-MM-DD]
+
+- <!-- entry -->
