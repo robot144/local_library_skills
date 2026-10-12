@@ -10,7 +10,7 @@ Each skill lives under `skills/<skill-name>/` with a `SKILL.md` describing when 
 |---|---|
 | [`pdf-to-markdown`](skills/pdf-to-markdown/SKILL.md) | Convert a PDF into searchable markdown (local GPU/CPU OCR via marker-pdf) — for large, scanned, or formula-heavy PDFs where reading page-by-page isn't practical. |
 | [`local-library`](skills/local-library/SKILL.md) | Organize a folder of documents into an indexed, searchable structure (root index, optional user-created topic/subtopic folders, per-document summaries) — and navigate an existing one. Optionally offers `pdf-to-markdown` for searchable versions if that skill's available, and an optional Quarto-based browsing site (`init-quarto.py` / `sync-quarto-pages.py`) for visually exploring a library in a browser. |
-| [`workflow`](skills/workflow/SKILL.md) | Scaffold and extend reproducible research workflows using [Snakemake](https://snakemake.github.io/) — domain-agnostic (simulations, data processing, batch per-case runs). Ships `init-workflow.py` (scaffold) and `clean-workflow.py` (empty disposable `scratch/`, or everything generated with `--all`). |
+| [`workflow`](skills/workflow/SKILL.md) | Scaffold and extend reproducible research workflows using [Snakemake](https://snakemake.github.io/) — domain-agnostic (simulations, data processing, batch per-case runs). Ships `init-workflow.py` (scaffold), `clean-workflow.py` (empty disposable `scratch/`, or everything generated with `--all`), and `summarize-workflow.py` (purpose, rule drift, per-case status). |
 
 ## Example prompts
 

@@ -12,9 +12,10 @@ particular kind of research task.
 
 **This skill is mostly instructions, not automation**, same split as
 `local-library`: the mechanical pieces (scaffolding a new workflow,
-emptying its disposable folders) have small helper scripts; designing
-rules, deciding what's disposable vs. worth keeping, and wiring
-dependencies are judgment calls, documented as instructions below.
+emptying its disposable folders, summarizing its current state) have
+small helper scripts; designing rules, deciding what's disposable vs.
+worth keeping, and wiring dependencies are judgment calls, documented as
+instructions below.
 
 **Independent of `local-library`.** A project can have both, but neither
 assumes the other exists.
@@ -118,6 +119,33 @@ rg -l 'snakemake-workflow-root: v1' --glob CLAUDE.md
 
 Use this before assuming no workflow exists yet, or when the user asks "is
 there already a workflow for X" without naming a path.
+
+## Summarizing a workflow
+
+```bash
+python3 scripts/summarize-workflow.py [path/to/workflow-root]
+```
+
+Defaults to `./workflow` if no path is given. Prints the workflow's
+purpose (from `CLAUDE.md`'s title), every rule declared under `rules/`
+cross-checked against the Snakefile's `include:` lines (flags a rule file
+that's never included, or an `include:` pointing at a file that doesn't
+exist), and — when `scratch/`, `outputs/`, or `logs/` use per-case
+subfolders — a per-case presence check across them (flags a case that ran
+but never produced a kept output). Pure directory/text introspection, no
+Snakemake invocation needed, so it works even before `pixi install`. Use
+this when the user asks what's in a workflow, wants a status check, or you
+suspect a run failed partway through.
+
+**Only cross-checks folders that actually use per-case subfolders.** A
+folder that aggregates every case into one flat file (e.g. a `collect_*`
+rule's single combined output) isn't missing anything just because it has
+no subfolder named after a given case — the summary says so explicitly
+(`not checked per-case - flat/aggregated: ...`) rather than printing a
+false "missing output" flag. Confirmed by testing: a workflow with a flat
+`outputs/` initially flagged every one of its successful cases as "ran but
+no kept output yet," which was wrong — fixed by excluding flat folders from
+the per-case check entirely, not just from the display.
 
 ## Adding a rule
 

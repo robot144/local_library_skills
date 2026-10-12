@@ -282,10 +282,16 @@ conflicting dependency that forces it.
   skill or not) — both deferred past the initial scaffold-from-scratch use
   case; revisit once that's working.
 - **Status/drift checking**, analogous to `local-library`'s
-  `show-library.py` (e.g. "which cases have `scratch/` but no `outputs/`
-  yet," "which cases' `scratch/` is safe to clean up," surfaced via
-  `snakemake --summary`/`--list-target-rules` vs. a bespoke script) — not
-  yet decided.
+  `show-library.py` — resolved: implemented as a bespoke script,
+  `scripts/summarize-workflow.py` (pure directory/text introspection, no
+  `snakemake --summary`/`--list-target-rules` invocation needed). Reports
+  the workflow's purpose, declared-vs-included rule drift, and — only for
+  folders that actually use per-case subfolders — which cases ran
+  (`scratch/`) but produced no kept output (`outputs/`). Tested against
+  both example workflows; the per-case check had to be taught to skip flat
+  (aggregated) folders specifically, or it false-flagged every
+  successfully-completed case in a workflow whose final rule collects
+  everything into one combined file rather than per-case outputs.
 - **Per-rule environments**: stick with single project-wide `pixi.toml`
   always, or document an escape hatch for genuinely conflicting
   dependencies (conda env per rule via Snakemake's own `conda:` directive)?
