@@ -139,6 +139,17 @@ That's a plain copy, not a symlink — re-run it to pick up updates after pullin
 
 For other agents, consult that agent's own docs for where it looks for skills/tools and copy (or symlink) the relevant `skills/<skill-name>/` directory there instead.
 
+## Development
+
+This repo's own `pixi.toml` (root level, separate from any skill's own scaffolded environment) is a dev/test environment for working on the skills themselves — not something an end user installing a skill needs.
+
+```bash
+pixi install     # set up the dev environment (pytest, plus whatever the scripts under test need)
+pixi run test     # run the unit test suite (pytest)
+```
+
+Unit tests live under `tests/<skill-name>/`, one subfolder per skill, and cover each skill's Python scripts — scaffolding, parsing, and cleanup logic — not the skills' own `SKILL.md` prose, which guides agent behavior and has no unit-test equivalent; see [`plan.md`](plan.md)'s "Testing" section for how that's validated instead. Coverage so far: `workflow`, `reporting`, and `local-library`'s scripts. `pdf-to-markdown` isn't covered yet — its scripts mostly orchestrate actual OCR model calls, a heavier integration-test shape than the others.
+
 ## License
 
 GPL-3.0 — see [LICENSE](LICENSE).

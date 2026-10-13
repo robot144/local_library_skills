@@ -22,3 +22,11 @@ pixi install
 pixi run python script.py
 pixi shell
 ```
+
+## Testing
+
+This repo has a pytest suite for the skills' Python scripts, under `tests/<skill-name>/`. Run it after changing anything in `skills/*/scripts/`:
+
+```bash
+pixi run test
+```

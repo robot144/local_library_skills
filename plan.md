@@ -29,18 +29,22 @@ conversation for the reasoning:
   `find-docs.py`): pytest unit tests, under `tests/<skill-name>/`, run via
   `pixi run test`. Covers the pure parsing/scaffolding/cleanup logic —
   **not** actual `pixi install`/`quarto render`/`snakemake` execution,
-  which stays a separate, heavier integration concern. 146 tests across
+  which stays a separate, heavier integration concern. 147 tests across
   `workflow`, `reporting`, and `local-library`'s six scripts (started with
   the first two, where this session's real bugs were found, then extended
-  to `local-library`). Writing `local-library`'s tests surfaced one more
-  real discrepancy: `sync-quarto-pages.py`'s docstring claims wrapper
-  `.qmd` files are "regenerated each time," but once an `INDEX.md` entry's
-  link has been converted to `.qmd`, a later run never revisits it, even
-  if the wrapper file goes missing — confirmed by testing, pinned as a
-  characterization test (`test_write_wrappers_does_not_regenerate_missing_wrapper_on_rerun`)
-  reflecting actual behavior, not fixed yet. `pdf-to-markdown` remains
-  uncovered — its scripts lean more on actually invoking `marker-pdf`/
-  `llama.cpp`, a heavier integration-test shape than the others.
+  to `local-library`). Writing `local-library`'s tests surfaced, and this
+  then fixed, one more real bug: `sync-quarto-pages.py`'s docstring claims
+  wrapper `.qmd` files are "regenerated each time," but once an
+  `INDEX.md` entry's link had been converted to `.qmd`, a later run never
+  revisited it — a deleted wrapper never came back, and an edited title
+  never resynced. Fixed by matching already-`.qmd` links too (not just
+  `.md`), so the wrapper regenerates whenever the source `.md` exists,
+  independent of which link suffix is currently in `INDEX.md`; confirmed
+  both by a standalone repro script and two pytest regression tests
+  (`test_write_wrappers_recreates_missing_wrapper_on_rerun`,
+  `test_write_wrappers_resyncs_title_after_index_md_edit`). `pdf-to-markdown`
+  remains uncovered — its scripts lean more on actually invoking
+  `marker-pdf`/`llama.cpp`, a heavier integration-test shape than the others.
 - **The skills themselves** (the `SKILL.md` prose that guides agent
   behavior): no unit-test equivalent exists for natural-language guidance.
   What's actually been validating these so far is manual, in-session
