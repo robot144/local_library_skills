@@ -1,6 +1,6 @@
 # local_library_skills
 
-**Research skills** for coding agents (e.g. Claude Code) — working directly on disk, no external service, no re-uploading files into a chat each time: converting PDFs to searchable markdown ([`pdf-to-markdown`](skills/pdf-to-markdown/SKILL.md)), organizing a local library of documents ([`local-library`](skills/local-library/SKILL.md)), scaffolding and running reproducible Snakemake workflows ([`workflow`](skills/workflow/SKILL.md)), and authoring Quarto reports/logs ([`reporting`](skills/reporting/SKILL.md)). The repo's name reflects where this started — a local-library toolkit — not its current scope; see [`plan.md`](plan.md) for how that's evolved and what's still being scoped out.
+**Research skills** for coding agents (e.g. Claude Code) — working directly on disk, no external service, no re-uploading files into a chat each time: converting PDFs to searchable markdown ([`pdf-to-markdown`](skills/pdf-to-markdown/SKILL.md)), organizing a local library of documents ([`local-library`](skills/local-library/SKILL.md)), scaffolding and running reproducible Snakemake workflows ([`workflow`](skills/workflow/SKILL.md)), authoring Quarto reports/logs ([`reporting`](skills/reporting/SKILL.md)), and launching a coding agent session from a script ([`agent-runner`](skills/agent-runner/SKILL.md)). The repo's name reflects where this started — a local-library toolkit — not its current scope; see [`plan.md`](plan.md) for how that's evolved and what's still being scoped out.
 
 Each skill lives under `skills/<skill-name>/` with a `SKILL.md` describing when and how to use it, plus any scripts it needs. Drop this repo (or the specific skill directories you want) wherever your agent loads skills from, per that agent's own conventions.
 
@@ -12,6 +12,7 @@ Each skill lives under `skills/<skill-name>/` with a `SKILL.md` describing when 
 | [`local-library`](skills/local-library/SKILL.md) | Organize a folder of documents into an indexed, searchable structure (root index, optional user-created topic/subtopic folders, per-document summaries) — and navigate an existing one. Optionally offers `pdf-to-markdown` for searchable versions if that skill's available, and an optional Quarto-based browsing site (`init-quarto.py` / `sync-quarto-pages.py`) for visually exploring a library in a browser. |
 | [`workflow`](skills/workflow/SKILL.md) | Scaffold and extend reproducible research workflows using [Snakemake](https://snakemake.github.io/) — domain-agnostic (simulations, data processing, batch per-case runs). Ships `init-workflow.py` (scaffold), `clean-workflow.py` (empty disposable `scratch/`, or everything generated with `--all`), and `summarize-workflow.py` (purpose, rule drift, per-case status). |
 | [`reporting`](skills/reporting/SKILL.md) | Author and render one-off research documents (reports, ongoing-work logs) using [Quarto](https://quarto.org/) — domain-agnostic, standalone, HTML or PDF output. Ships `init-quarto.py` (scaffold from a `report`/`log` template, `--format html\|pdf`), `find-docs.py` (locate every document this skill created, anywhere), and `clean-docs.py` (remove render output, optionally `--all` for local caches too). |
+| [`agent-runner`](skills/agent-runner/SKILL.md) | Launch a coding agent session (Claude Code only, v1) from a script, with automatic vendor resolution — usable standalone or as a `workflow` pipeline step for batch/automated agent runs. Ships `run-agent.py` (`launch_agent`, plus `--detect-vendor`/`--write-default-vendor` for scaffold-time setup). |
 
 ## Example prompts
 
@@ -41,6 +42,11 @@ Things you can just ask your agent, once the relevant skill is installed:
 - "Summarize my progress in a log."
 - "Is there already a report or log for X?"
 
+**`agent-runner`**
+- "Run an agent to look up X and summarize it."
+- "Add a step to this workflow that uses an agent to [reasoning/lookup task]."
+- "What agent vendor would this default to right now?"
+
 ## Status
 
 Which skills have actually been exercised against which agent, not just assumed to work because the directory convention matches.
@@ -51,12 +57,15 @@ Which skills have actually been exercised against which agent, not just assumed 
 | `local-library` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
 | `workflow` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
 | `reporting` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
+| `agent-runner` | Working | Not checked yet | Not checked yet | Not checked yet | Not checked yet |
 
 Note on `local-library`: all 5 of its scripts (`init-library.py`, `count-docs.py`, `show-library.py`, `init-quarto.py`, `sync-quarto-pages.py`) have been run and verified, and the skill's core workflows (classifying/adding documents, writing entries, organizing into topic and nested subtopic folders, searching, visual browsing via the generated Quarto site) have all been exercised extensively in practice on a real, ~90-document library — not just a synthetic test case.
 
 Note on `workflow`: both scripts (`init-workflow.py`, `clean-workflow.py`) and the core rule patterns (`shell:` vs. `script:` rules, a staged-per-case `scratch/` pattern, and `scratch`-only vs. `--all` cleaning) have been exercised against two real, actually-executed Snakemake workflows — a simple two-step pipeline and a four-case parallel compute-then-collect pipeline — including a full scaffold → run → clean → force-rerun cycle, not just read through.
 
 Note on `reporting`: all three scripts (`init-quarto.py`, `find-docs.py`, `clean-docs.py`), both templates (`report`, `log`), and both output formats (`html`, `pdf`) have been scaffolded, installed, actually rendered via a real Quarto/Jupyter/TinyTeX environment, and cleaned up again — merging into a pre-existing root `pixi.toml` rather than creating a nested one — not just read through. Real bugs were caught and fixed by this testing, each only found by actually running the thing: a missing `jupyter` dependency (needed for Quarto to execute the `report` template's Python code chunk, not just `quarto` itself); angle-bracket placeholders (`<Report title>`) that silently rendered as blank, invalid HTML tags instead of visible text; `find-docs.py` initially listing the skill's own bundled templates as if they were real user documents; `clean-docs.py`'s `--all` initially being an unscoped tree-wide search that would have deleted other projects' and the repository's own shared `.pixi/` environments before being caught in `--dry-run` and scoped down to a document's own directory only; and PDF rendering requiring Quarto's own TinyTeX (conda-forge's `texlive-core` alone is missing `lualatex` and has a broken `pdflatex`) plus `xz` as a real `pixi.toml` dependency (TinyTeX's own extraction step fails without it in this sandboxed container).
+
+Note on `agent-runner`: this is a first version, Claude Code only — vendor resolution (`detect_vendor_from_env`, `resolve_vendor`, the explicit > config.yaml > env-detect > error fallback chain) and `write_default_vendor_to_config`/`--detect-vendor`/`--write-default-vendor` have all been run for real via the CLI, not just pytest (`subprocess.run` is mocked in the test suite throughout — it never spawns a live agent). This real-CLI testing caught and fixed an actual bug: `write_default_vendor_to_config` crashed with `FileNotFoundError` scaffolding into a not-yet-existing directory, since the parent dir was never created first. **The live path has now been exercised too**: `python3 run-agent.py "Compute 1+1" --vendor claude-code` actually launched a nested `claude -p` session, which correctly answered `"result": "2"` — confirming vendor resolution, command construction, JSON parsing, and transcript capture all work end-to-end against the real CLI, not just mocks (cost ~$0.06, ~1.3s).
 
 ### By OS
 
@@ -66,6 +75,7 @@ Note on `reporting`: all three scripts (`init-quarto.py`, `find-docs.py`, `clean
 | `local-library` | Working | Not checked yet | Not checked yet | Not checked yet |
 | `workflow` | Working | Not checked yet | Not checked yet | Not checked yet |
 | `reporting` | Working | Not checked yet | Not checked yet | Not checked yet |
+| `agent-runner` | Working | Not checked yet | Not checked yet | Not checked yet |
 
 `pdf-to-markdown` now ships both bash (`.sh`) and Python (`.py`) scripts for every operation (install/uninstall/estimate/convert) — native Windows (cmd.exe/PowerShell) can't run a `.sh` file at all, so the `.py` scripts exist specifically for that case (see `pdf-to-markdown`'s "Platform check" section). They've been checked for behavioral parity against the `.sh` scripts on this Linux machine (same stdout contracts, same chunking/resumability/merge behavior, same guard rails), but real native-Windows execution — pixi's Windows build of `llama.cpp`, `pdfinfo`/poppler availability, HF cache path conventions — hasn't been tried yet, hence "unverified" rather than "Working". WSL is the original documented workaround and would likely work since it's a real Linux environment, but that's untested, not assumed — hence its own separate "Not checked yet". `local-library`'s own helper scripts are plain Python (no bash dependency), so native Windows is plausible there too — but untested, hence "Not checked yet" rather than assuming it works.
 
@@ -148,7 +158,7 @@ pixi install     # set up the dev environment (pytest, plus whatever the scripts
 pixi run test     # run the unit test suite (pytest)
 ```
 
-Unit tests live under `tests/<skill-name>/`, one subfolder per skill, and cover each skill's Python scripts — scaffolding, parsing, and cleanup logic — not the skills' own `SKILL.md` prose, which guides agent behavior and has no unit-test equivalent; see [`plan.md`](plan.md)'s "Testing" section for how that's validated instead. Coverage so far: `workflow`, `reporting`, and `local-library`'s scripts. `pdf-to-markdown` isn't covered yet — its scripts mostly orchestrate actual OCR model calls, a heavier integration-test shape than the others.
+Unit tests live under `tests/<skill-name>/`, one subfolder per skill, and cover each skill's Python scripts — scaffolding, parsing, and cleanup logic — not the skills' own `SKILL.md` prose, which guides agent behavior and has no unit-test equivalent; see [`plan.md`](plan.md)'s "Testing" section for how that's validated instead. Coverage so far: `workflow`, `reporting`, `local-library`, and `agent-runner`'s scripts. `pdf-to-markdown` isn't covered yet — its scripts mostly orchestrate actual OCR model calls, a heavier integration-test shape than the others.
 
 ## License
 

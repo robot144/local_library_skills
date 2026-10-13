@@ -1,0 +1,17 @@
+from pathlib import Path
+
+import yaml
+
+with open(snakemake.input[0]) as f:
+    test_cases = yaml.safe_load(f) or []
+
+assert len(test_cases) == len(snakemake.output.first) == len(snakemake.output.second), (
+    "test_cases.yaml entries must match the case count computed in the Snakefile"
+)
+
+for tc, first_path, second_path in zip(test_cases, snakemake.output.first, snakemake.output.second):
+    first_path = Path(first_path)
+    second_path = Path(second_path)
+    first_path.parent.mkdir(parents=True, exist_ok=True)
+    first_path.write_text(tc["first"])
+    second_path.write_text(tc["second"])

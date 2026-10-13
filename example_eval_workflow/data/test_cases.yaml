@@ -1,0 +1,46 @@
+- name: arithmetic_check
+  # Trivial/cheap, so worth comparing across every size alias.
+  sizes: [default, small, medium, large]
+  first: "Compute 6 * 7. Respond with only the final number, nothing else."
+  second: >-
+    Read ./subject_transcript.json in this directory (it's JSON; the
+    answer is in its "result" field) and check whether it equals "42"
+    (allow minor formatting variation, e.g. surrounding whitespace).
+    Respond with exactly PASS or FAIL on the first line, followed by one
+    sentence of reasoning.
+
+- name: web_lookup_manning
+  # Needs WebFetch/WebSearch, same reason as python_sine_csv's Write+Bash.
+  permission_mode: bypassPermissions
+  first: >-
+    Look up the Manning formula (Manning's equation for open-channel flow)
+    on Wikipedia. Respond with only the formula itself, expressed in terms
+    of velocity, the Manning coefficient n, the hydraulic radius R, and
+    the channel slope S (e.g. "V = (k/n) * R^(2/3) * S^(1/2)") - no
+    explanation, no other text.
+  second: >-
+    Read ./subject_transcript.json in this directory (it's JSON; the
+    answer is in its "result" field). Check that it states Manning's
+    equation correctly: velocity proportional to R raised to the power
+    2/3 and S raised to the power 1/2, divided by (or scaled by the
+    inverse of) the roughness coefficient n. Minor notational variation
+    (k vs 1, Rh vs R, etc.) is fine. Respond with exactly PASS or FAIL on
+    the first line, followed by one sentence of reasoning.
+
+- name: python_sine_csv
+  # Needs Write (the script) + Bash (to run it), unlike arithmetic_check
+  # which only needs a text response - hence permission_mode below.
+  permission_mode: bypassPermissions
+  first: >-
+    Write a Python script named compute_sine.py that creates a CSV file
+    named sine.csv with header "x,sin_x" and one row for each
+    x in 0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, with sin_x being sin(x)
+    (6 decimal places). Then execute the script so sine.csv is created
+    in the current directory. Respond with only the word DONE when
+    finished.
+  second: >-
+    Read ./sine.csv in this directory and check that it has a header
+    plus 7 data rows, and that each row's second column is sin(x) for
+    the x in that row, within 0.001 tolerance. Respond with exactly
+    PASS or FAIL on the first line, followed by one sentence of
+    reasoning.
