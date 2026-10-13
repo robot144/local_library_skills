@@ -16,6 +16,7 @@ PERMISSION_MODES = {tc["name"]: tc.get("permission_mode") for tc in TEST_CASES}
 CASE_SIZE_PAIRS = [(tc["name"], size) for tc in TEST_CASES for size in tc.get("sizes", ["default"])]
 
 include: "rules/split_test_cases.smk"
+include: "rules/stage_search_library.smk"
 include: "rules/run_subject.smk"
 include: "rules/judge_result.smk"
 include: "rules/collect_results.smk"

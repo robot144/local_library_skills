@@ -27,6 +27,64 @@
     (k vs 1, Rh vs R, etc.) is fine. Respond with exactly PASS or FAIL on
     the first line, followed by one sentence of reasoning.
 
+- name: local_library_add_docs
+  # Needs Write+Bash (library scripts, copying the existing md folders) +
+  # Read (skimming the docs), same reason as python_sine_csv.
+  permission_mode: bypassPermissions
+  first: >-
+    Read the skill instructions at {LOCAL_LIBRARY_SKILL} and follow them to
+    set up a new local library at ./local_library (in your current working
+    directory), then add the document found in {EXAMPLE_DOCS} to it:
+    Kernkamp2011_FlexibleMesh.pdf. It already has a matching folder next to
+    it (Kernkamp2011_FlexibleMesh/Kernkamp2011_FlexibleMesh.md) from a prior
+    pdf-to-markdown conversion - copy it into the library alongside the
+    renamed PDF rather than reconverting, same as the skill's "Offering a
+    markdown version" section describes, just skip asking since there's no
+    user to ask in this run. You don't need to read the document in full -
+    skim the title/abstract/intro to write the entry. This is a
+    non-interactive run, so don't ask any clarifying questions - make the
+    reasonable default choice yourself wherever the skill would normally
+    ask a user something (e.g. keep the library flat, no topic folders,
+    for just one document). Respond with only the word DONE when finished.
+  second: >-
+    In this directory, ./local_library should now exist. Check: (1)
+    local_library/CLAUDE.md exists and contains the line
+    "<!-- local-library-root: v1 -->", (2) local_library/INDEX.md has one
+    entry for Kernkamp2011_FlexibleMesh (or a close variant of that name
+    following the library's <author><year>_<description> convention),
+    with a Summary, Keywords, and a Files line linking the PDF, (3) the
+    PDF is actually present in local_library/ (renamed if needed), and (4)
+    the document's existing markdown folder (Kernkamp2011_FlexibleMesh/)
+    was copied into the library alongside its PDF rather than left out.
+    Respond with exactly PASS or FAIL on the first line, followed by one
+    sentence of reasoning covering any part that didn't hold.
+
+- name: local_library_search
+  # Just Read, so no permission_mode override needed (same reasoning as
+  # web_lookup_manning's judge). The library itself is staged in by
+  # stage_search_library.smk, reusing local_library_add_docs's output.
+  first: >-
+    A local library already exists at ./local_library (already staged for
+    you - no need to set one up). Following the local-library skill's
+    "Searching an existing library" procedure (see
+    {LOCAL_LIBRARY_SKILL}), find and read the Kernkamp et al. paper in
+    this library and answer: how is the cell center positioned in
+    relation to the cell nodes? Cite the section (and page, if you can
+    find one via the paper's own _meta.json) where you found the answer.
+    Respond with just the answer and citation, no other text.
+  second: >-
+    Read ./subject_transcript.json in this directory (the answer is in
+    its "result" field). Check that it correctly states the cell center
+    sits at the cell's circumcentre - the point equidistant from (on the
+    circle through) the cell's nodes/vertices - not at the centroid or a
+    node average, and ideally mentions this is chosen for orthogonality
+    between neighbouring cells. The correct citation is Section 2.1
+    ("Staggered grid"), PDF page 3 - check that the cited section/page
+    matches this (minor variation like "page 2" for the 0-indexed page_id
+    is fine, but a clearly wrong section is not). Respond with exactly
+    PASS or FAIL on the first line, followed by one sentence of
+    reasoning covering both the answer's correctness and the citation.
+
 - name: python_sine_csv
   # Needs Write (the script) + Bash (to run it), unlike arithmetic_check
   # which only needs a text response - hence permission_mode below.

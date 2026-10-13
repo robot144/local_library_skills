@@ -1,6 +1,15 @@
+def staged_library_input(wc):
+    # local_library_search reuses local_library_add_docs's output - see
+    # stage_search_library.smk - every other case needs no extra input.
+    if wc.case == "local_library_search":
+        return [f"scratch/local_library_search/{wc.size}/run/local_library"]
+    return []
+
+
 rule run_subject:
     input:
         prompt="scratch/{case}/first.txt",
+        library=staged_library_input,
     output:
         result="scratch/{case}/{size}/subject_result.json",
         transcript="scratch/{case}/{size}/run/subject_transcript.json",
