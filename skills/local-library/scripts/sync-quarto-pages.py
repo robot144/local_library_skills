@@ -43,7 +43,13 @@ import yaml
 
 DEFAULT_ROOT = "local_library"
 ENTRY_RE = re.compile(r"^### (?P<name>\S+) — (?P<title>.+)$")
-MD_LINK_RE = re.compile(r"\[markdown\]\((?P<name>[^/]+)/(?P=name)\.md\)")
+# Matches a markdown-version link whether it still points at .md (not yet
+# converted) or already at .qmd (converted on a previous run) - matching
+# only .md here was the bug: once a link was rewritten to .qmd it could
+# never be found again, so the wrapper was never regenerated after that
+# point even if deleted, and its title never resynced with a later
+# INDEX.md edit. Confirmed by testing.
+MD_LINK_RE = re.compile(r"\[markdown\]\((?P<name>[^/]+)/(?P=name)\.(?P<ext>md|qmd)\)")
 H1_RE = re.compile(r"^# (.+)$", re.MULTILINE)
 
 
@@ -97,18 +103,24 @@ def write_wrappers_and_fix_links(index_path):
             doc_dir = directory / current_name
             md_file = doc_dir / f"{current_name}.md"
             if md_file.is_file():
+                # Regenerate the wrapper every time the source .md exists,
+                # regardless of which link suffix is currently in INDEX.md
+                # - this is what actually keeps the title in sync and
+                # recreates the wrapper if it was deleted, not just the
+                # one-time .md -> .qmd conversion.
                 qmd_file = doc_dir / f"{current_name}.qmd"
                 qmd_file.write_text(
                     f'---\ntitle: "{yaml_quote(current_title)}"\n---\n\n'
                     f"{{{{< include {current_name}.md >}}}}\n",
                     encoding="utf-8",
                 )
-                new_line = line[: link_m.start()] + line[link_m.start():link_m.end()].replace(
-                    f"{current_name}/{current_name}.md", f"{current_name}/{current_name}.qmd"
-                ) + line[link_m.end():]
-                if new_line != line:
-                    changed = True
-                line = new_line
+                if link_m["ext"] == "md":
+                    new_line = line[: link_m.start()] + line[link_m.start():link_m.end()].replace(
+                        f"{current_name}/{current_name}.md", f"{current_name}/{current_name}.qmd"
+                    ) + line[link_m.end():]
+                    if new_line != line:
+                        changed = True
+                    line = new_line
 
         out_lines.append(line)
 

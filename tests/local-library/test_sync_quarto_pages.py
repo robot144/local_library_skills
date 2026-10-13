@@ -91,16 +91,14 @@ def test_write_wrappers_second_run_on_converted_link_reports_unchanged(
     assert changed_again is False
 
 
-def test_write_wrappers_does_not_regenerate_missing_wrapper_on_rerun(
-    sync_quarto_pages, tmp_path
-):
-    """Characterizes actual (not documented) behavior, confirmed by
-    testing: once an INDEX.md entry's link already points at .qmd, a
-    later run does NOT recreate the wrapper file even if it's missing -
-    the module's docstring claims wrappers are "regenerated each time,"
-    but the regex only matches .md-suffixed links, so a link already
-    converted to .qmd is never revisited. Worth fixing, but pinning the
-    real behavior here rather than the aspirational one."""
+def test_write_wrappers_recreates_missing_wrapper_on_rerun(sync_quarto_pages, tmp_path):
+    """Regression test for a bug confirmed by testing: once an INDEX.md
+    entry's link already points at .qmd, a later run used to skip it
+    entirely (the regex only matched .md-suffixed links), so a deleted
+    wrapper never came back even though the docstring claims wrappers are
+    "regenerated each time." Fixed by also matching already-.qmd links -
+    the wrapper is now regenerated whenever the source .md exists,
+    independent of which link suffix is currently in INDEX.md."""
     index_path = tmp_path / "INDEX.md"
     doc_dir = _make_doc_entry(index_path)
     sync_quarto_pages.write_wrappers_and_fix_links(index_path)
@@ -108,7 +106,25 @@ def test_write_wrappers_does_not_regenerate_missing_wrapper_on_rerun(
     qmd_file.unlink()
 
     sync_quarto_pages.write_wrappers_and_fix_links(index_path)
-    assert not qmd_file.exists()
+    assert qmd_file.is_file()
+
+
+def test_write_wrappers_resyncs_title_after_index_md_edit(sync_quarto_pages, tmp_path):
+    """The other half of "titles stay in sync with INDEX.md": editing the
+    title in an already-converted entry and re-running must update the
+    existing wrapper's title too, not just leave it frozen from the first
+    conversion."""
+    index_path = tmp_path / "INDEX.md"
+    doc_dir = _make_doc_entry(index_path, title="Original Title")
+    sync_quarto_pages.write_wrappers_and_fix_links(index_path)
+
+    index_path.write_text(
+        index_path.read_text().replace("Original Title", "Updated Title")
+    )
+    sync_quarto_pages.write_wrappers_and_fix_links(index_path)
+
+    qmd_file = doc_dir / "doc1.qmd"
+    assert 'title: "Updated Title"' in qmd_file.read_text()
 
 
 def test_write_wrappers_skips_entry_without_md_file(sync_quarto_pages, tmp_path):
