@@ -12,7 +12,7 @@ assert len(test_cases) == len(snakemake.output.first) == len(snakemake.output.se
 # Absolute, so prompt text is correct regardless of how deep the subject's
 # cwd (scratch/{case}/{size}/run) is nested relative to this workflow dir.
 PLACEHOLDERS = {
-    "{EXAMPLE_DOCS}": str(Path("../example_docs").resolve()),
+    "{EXAMPLE_DOCS}": str(Path("../example_local_library").resolve()),
 }
 
 

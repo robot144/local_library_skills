@@ -18,7 +18,7 @@ into a fuller roadmap as that's decided.
 | `pdf-to-markdown` | Convert a PDF into searchable markdown via local OCR (marker-pdf). |
 | `local-library` | Organize a folder of documents into an indexed, searchable structure, with optional Quarto browsing site. |
 | `workflow` | Scaffold and extend reproducible research workflows using [Snakemake](https://snakemake.github.io/). First version implemented — see [`workflow_design.md`](workflow_design.md) for the design and [`skills/workflow/SKILL.md`](skills/workflow/SKILL.md) for the skill itself. |
-| `reporting` | Author and render one-off research documents (reports, ongoing-work logs) using [Quarto](https://quarto.org/) — domain-agnostic, standalone. First version implemented — see [`reporting_design.md`](reporting_design.md) for the design and [`skills/reporting/SKILL.md`](skills/reporting/SKILL.md) for the skill itself. |
+| `reporting` | Author and render one-off research documents (reports, ongoing-work logs, slide decks) or multi-page documentation *projects* (`docs` kind, e.g. a Quarto website) using [Quarto](https://quarto.org/) — domain-agnostic, standalone. First version implemented — see [`reporting_design.md`](reporting_design.md) for the design and [`skills/reporting/SKILL.md`](skills/reporting/SKILL.md) for the skill itself. |
 | `agent-runner` | Launch a coding agent session (Claude Code only, v1) from a script, with automatic vendor resolution — usable standalone or as a `workflow` pipeline step. First version implemented — see [`agent-runner_design.md`](agent-runner_design.md) for the design (including the "Katrina" and eval-harness worked examples) and [`skills/agent-runner/SKILL.md`](skills/agent-runner/SKILL.md) for the skill itself. |
 
 ## Testing
@@ -31,7 +31,7 @@ conversation for the reasoning:
   `pixi run test`. Covers the pure parsing/scaffolding/cleanup logic —
   **not** actual `pixi install`/`quarto render`/`snakemake` execution
   (or, for `agent-runner`, actually launching a live agent session), which
-  stays a separate, heavier integration concern. 176 tests across
+  stays a separate, heavier integration concern. 195 tests across
   `workflow`, `reporting`, `local-library`'s six scripts, and
   `agent-runner`'s `run-agent.py` (`subprocess.run` mocked throughout, so
   these never spawn a real nested agent). Writing `local-library`'s tests
@@ -49,6 +49,12 @@ conversation for the reasoning:
   writing. Fixed and pinned with a regression test. `pdf-to-markdown`
   remains uncovered — its scripts lean more on actually invoking
   `marker-pdf`/`llama.cpp`, a heavier integration-test shape than the others.
+  Newer gap, same shape: `reporting`'s `docs` project kind (`init-docs.py`)
+  has no dedicated pytest coverage yet, and neither does the project-kind
+  detection/cleanup added to `find-docs.py`/`clean-docs.py`
+  (`find_projects`, `_site/` removal) — only exercised manually and, for
+  `init-docs.py`, indirectly via `skill_tests` (which doesn't touch
+  `find-docs.py`/`clean-docs.py` at all).
 - **The skills themselves** (the `SKILL.md` prose that guides agent
   behavior): no unit-test equivalent exists for natural-language guidance.
   What's actually been validating these so far is manual, in-session
@@ -60,14 +66,17 @@ conversation for the reasoning:
   design on paper: `agent-runner_design.md`'s "Worked example 2"
   (subject-prompt/judge-prompt eval harness, reusing `workflow`'s split →
   per-case → collect rule shape) is now built and actually run, as
-  `skill_tests/` — one real test case, real cost ($0.18 for both
-  agent invocations), correct `PASS` verdict. Tracing through the design
-  before running it for real also caught a genuine bug: the judge's `cwd`
-  is deliberately the same as the subject's, so `run-agent.py`'s own
-  transcript write would have silently clobbered the subject's transcript
-  the judge needed to inspect — fixed by having the subject back up its
-  transcript to a distinct filename first. Still just one test case for
-  one trivial prompt pair, not a real test suite yet.
+  `skill_tests/` — grown from one real test case to a real (if still
+  small) suite: 8 cases / 11 case-size pairs, covering `local-library`
+  (library setup + search) and `reporting` (`report`/`slides`/`docs`
+  project kind, including an actual `quarto render`), plus two
+  skill-agnostic baselines. All 11 currently `PASS`; ~$4.09 for a full
+  run. Tracing through the design before the first real run also caught
+  a genuine bug: the judge's `cwd` is deliberately the same as the
+  subject's, so `run-agent.py`'s own transcript write would have
+  silently clobbered the subject's transcript the judge needed to
+  inspect — fixed by having the subject back up its transcript to a
+  distinct filename first.
 
 ## Open questions
 

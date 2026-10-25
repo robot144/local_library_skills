@@ -35,8 +35,8 @@
     Using the local-library skill, set up a new local library at
     ./local_library (in your current working directory), then add the
     document found in {EXAMPLE_DOCS} to it:
-    Kernkamp2011_FlexibleMesh.pdf. It already has a matching folder next to
-    it (Kernkamp2011_FlexibleMesh/Kernkamp2011_FlexibleMesh.md) from a prior
+    kernkamp2011_flexible_mesh.pdf. It already has a matching folder next to
+    it (kernkamp2011_flexible_mesh/kernkamp2011_flexible_mesh.md) from a prior
     pdf-to-markdown conversion - copy it into the library alongside the
     renamed PDF rather than reconverting, same as the skill's "Offering a
     markdown version" section describes, just skip asking since there's no
@@ -50,11 +50,11 @@
     In this directory, ./local_library should now exist. Check: (1)
     local_library/CLAUDE.md exists and contains the line
     "<!-- local-library-root: v1 -->", (2) local_library/INDEX.md has one
-    entry for Kernkamp2011_FlexibleMesh (or a close variant of that name
+    entry for kernkamp2011_flexible_mesh (or a close variant of that name
     following the library's <author><year>_<description> convention),
     with a Summary, Keywords, and a Files line linking the PDF, (3) the
     PDF is actually present in local_library/ (renamed if needed), and (4)
-    the document's existing markdown folder (Kernkamp2011_FlexibleMesh/)
+    the document's existing markdown folder (kernkamp2011_flexible_mesh/)
     was copied into the library alongside its PDF rather than left out.
     Respond with exactly PASS or FAIL on the first line, followed by one
     sentence of reasoning covering any part that didn't hold.
@@ -102,3 +102,75 @@
     the x in that row, within 0.001 tolerance. Respond with exactly
     PASS or FAIL on the first line, followed by one sentence of
     reasoning.
+
+- name: reporting_report
+  # Needs Write+Bash (reporting skill's init-quarto.py + editing the
+  # scaffolded file), same reason as python_sine_csv.
+  permission_mode: bypassPermissions
+  first: >-
+    Using the reporting skill, scaffold a new report document at
+    ./report.qmd (--template report). Fill in the frontmatter title as
+    "Sine Check" and the author as "CI" - don't leave the
+    "[Report title]"/"[Author]" placeholders. In the Results section,
+    write exactly one sentence stating that the computed value of 6 * 7
+    is 42. Leave every other section as scaffolded. Respond with only
+    the word DONE when finished.
+  second: >-
+    Read ./report.qmd in this directory. Check: (1) the frontmatter
+    title is "Sine Check" and author is "CI" - not the literal
+    "[Report title]"/"[Author]" placeholders, (2) the Results section
+    contains a sentence stating the value 42 as the result of 6 * 7 (or
+    equivalent phrasing). Respond with exactly PASS or FAIL on the first
+    line, followed by one sentence of reasoning covering any part that
+    didn't hold.
+
+- name: reporting_slides
+  # Needs Write+Bash, same reason as reporting_report.
+  permission_mode: bypassPermissions
+  first: >-
+    Using the reporting skill, scaffold a new slides deck at
+    ./slides.qmd (--template slides). Fill in the frontmatter title as
+    "Status Update" - don't leave the "[Presentation title]" placeholder.
+    Replace every other bracketed placeholder slide heading
+    (e.g. "[Opening slide title]") with a real heading of your choosing,
+    keeping the same number of slides and their structure (the
+    smaller-text slide, the two-column slide, the code slide, and the
+    closing Summary slide). In the Summary slide, write exactly one
+    bullet stating that the computed value of 6 * 7 is 42. Respond with
+    only the word DONE when finished.
+  second: >-
+    Read ./slides.qmd in this directory. Check: (1) `format: revealjs`
+    is still set, (2) the frontmatter title is "Status Update" - not the
+    literal "[Presentation title]" placeholder, (3) no bracketed
+    placeholder headings remain anywhere in the file (e.g.
+    "[Opening slide title]", "[A slide with more text than fits
+    comfortably]", "[A two-column slide]", "[A code slide]"), (4) the
+    Summary slide states the value 42 as the result of 6 * 7 (or
+    equivalent phrasing). Respond with exactly PASS or FAIL on the first
+    line, followed by one sentence of reasoning covering any part that
+    didn't hold.
+
+- name: reporting_docs_project
+  # Needs Write+Bash (init-docs.py, editing pages, pixi install, quarto
+  # render), same reason as python_sine_csv - this one also actually
+  # renders, so it's the costliest/slowest case here.
+  permission_mode: bypassPermissions
+  first: >-
+    Using the reporting skill, scaffold a new documentation project at
+    ./mydocs (--template docs). Set the site title (in _quarto.yml's
+    website.title) to "Widget CLI" - don't leave the "[Project name]"
+    placeholder there or in index.qmd. In index.qmd's Overview section,
+    write exactly one sentence: "This documents the Widget CLI, a tool
+    for managing widgets." Leave every other page as scaffolded. Then
+    render the project for real: cd into ./mydocs, run `pixi install`,
+    then `pixi run quarto render`. Respond with only the word DONE when
+    finished.
+  second: >-
+    Read ./mydocs/_site/index.html in this directory (the rendered
+    output). Check: (1) the file exists, (2) it contains "Widget CLI"
+    (the site title, not the literal "[Project name]" placeholder), (3)
+    it contains the sentence about managing widgets (minor wording
+    variation is fine, but it must state the document is about the
+    Widget CLI and managing widgets). Respond with exactly PASS or FAIL
+    on the first line, followed by one sentence of reasoning covering
+    any part that didn't hold.

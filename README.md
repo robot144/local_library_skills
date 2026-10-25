@@ -160,6 +160,18 @@ pixi run test     # run the unit test suite (pytest)
 
 Unit tests live under `python_unit_tests/<skill-name>/`, one subfolder per skill, and cover each skill's Python scripts — scaffolding, parsing, and cleanup logic — not the skills' own `SKILL.md` prose, which guides agent behavior and has no unit-test equivalent; see [`plan.md`](plan.md)'s "Testing" section for how that's validated instead. Coverage so far: `workflow`, `reporting`, `local-library`, and `agent-runner`'s scripts. `pdf-to-markdown` isn't covered yet — its scripts mostly orchestrate actual OCR model calls, a heavier integration-test shape than the others.
 
+### Testing the skills themselves (not just their scripts)
+
+`python_unit_tests/` can't validate the thing a `SKILL.md`'s prose actually guides — real agent judgment, like filling in placeholders correctly or choosing the right template. `skill_tests/` fills that gap: a Snakemake-based eval harness (`agent-runner`'s own "Worked example 2" — see [`agent-runner_design.md`](agent-runner_design.md)) that runs a real subject prompt through a real agent session, then a real judge prompt to grade the result PASS/FAIL, for a small set of test cases in `skill_tests/data/test_cases.yaml`. Currently covers `local-library` and `reporting`.
+
+```bash
+cd skill_tests && pixi install
+pixi run snakemake -n outputs/eval_summary.txt      # dry run - see what would execute
+pixi run snakemake --cores N outputs/eval_summary.txt   # run for real
+```
+
+**This costs real money** (every case is a live, billed agent session, plus another for its judge) and isn't run on every change — see `skill_tests/CLAUDE.md` for the full mechanics, and ask before a run that would touch a lot of cases at once.
+
 ### Activating skills during development
 
 Editing a skill under `skills/<name>/` doesn't do anything on its own — an agent only sees the copy installed under its own skill directory (see "Manual Installation" above, which is a plain copy, not a symlink). `scripts/activate-skills.py` closes that gap for local dev: it symlinks every skill under `skills/` straight into each known agent's project-scoped skill directory (see `AGENT_SKILL_DIRS` in the script), so edits show up immediately with no manual re-copy.
