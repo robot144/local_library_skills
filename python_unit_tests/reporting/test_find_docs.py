@@ -89,7 +89,7 @@ def test_main_reports_nothing_found(find_docs_mod, tmp_path, monkeypatch, capsys
     monkeypatch.setattr("sys.argv", ["find-docs.py", str(tmp_path)])
     exit_code = find_docs_mod.main()
     assert exit_code == 0
-    assert "No reporting-skill documents found" in capsys.readouterr().out
+    assert "No reporting-skill documents or projects found" in capsys.readouterr().out
 
 
 def test_main_errors_on_nonexistent_root(find_docs_mod, tmp_path, monkeypatch, capsys):

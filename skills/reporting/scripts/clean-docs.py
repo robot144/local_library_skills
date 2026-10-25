@@ -1,30 +1,41 @@
 #!/usr/bin/env python3
-"""Remove Quarto render artifacts (<name>.html, <name>.pdf, <name>_files/)
-for every document this skill created (carrying reporting-skill-doc: v1
-in its frontmatter) under a directory tree. Never touches the .qmd source
-itself - only what `quarto render` produces from it. Both output formats
-are checked regardless of a document's own `format:` frontmatter value,
-since `quarto render --to <format>` can produce either one-off without
-changing it - confirmed by testing: rendering a format:-html document to
-PDF via --to pdf left a .pdf file this script would otherwise have missed.
+"""Remove Quarto render artifacts for every document or project this
+skill created under a directory tree. Never touches source - only what
+`quarto render` produces from it.
+
+Two different shapes, two different cleanups (see find-docs.py for the
+same split):
+- single-file **documents** (report/log/slides/...): <name>.html,
+  <name>.pdf, <name>_files/ next to a .qmd carrying
+  reporting-skill-doc: v1 in its own frontmatter. Both output formats are
+  checked regardless of a document's own `format:` frontmatter value,
+  since `quarto render --to <format>` can produce either one-off without
+  changing it - confirmed by testing: rendering a format:-html document
+  to PDF via --to pdf left a .pdf file this script would otherwise have
+  missed.
+- **projects** (docs/...): the whole _site/ (Quarto's project-wide render
+  output - there's no single <name>.html the way a document has) next to
+  a _quarto.yml carrying the same marker as top-level keys.
 
 With --all, also removes any .quarto/ (Quarto's own render cache) and
 .pixi/ (the installed pixi environment) sitting in the same directory as
-one of this skill's own documents - heavier, since removing .pixi/ means
-the next render needs a full `pixi install` again, not just a few seconds
-of re-rendering. Deliberately NOT a blanket search of the whole tree for
-any .quarto/.pixi - confirmed necessary by testing: run from a repository
-root, an unscoped search found (and would have deleted) other projects'
-and the repository's own shared .pixi/ environments, none of which belong
-to a reporting-skill document at all. If a document's pixi.toml actually
-lives in an ancestor directory (the usual case - see init-quarto.py's
-ancestor-merge behavior), --all won't reach it; that's intentional, since
-an ancestor manifest is shared infrastructure, not something owned by one
-document.
+one of this skill's own documents/projects - heavier, since removing
+.pixi/ means the next render needs a full `pixi install` again, not just
+a few seconds of re-rendering. Deliberately NOT a blanket search of the
+whole tree for any .quarto/.pixi - confirmed necessary by testing: run
+from a repository root, an unscoped search found (and would have
+deleted) other projects' and the repository's own shared .pixi/
+environments, none of which belong to a reporting-skill document at all.
+If a document's pixi.toml actually lives in an ancestor directory (the
+usual case for documents - see init-quarto.py's ancestor-merge
+behavior), --all won't reach it; that's intentional, since an ancestor
+manifest is shared infrastructure, not something owned by one document.
+A docs project's pixi.toml is always its own (see init-docs.py), so --all
+does reach it.
 
-Scoped to this skill's own marked documents only, same as find-docs.py -
-not a blanket "delete every .html under this tree," which could remove
-Quarto output belonging to something else entirely.
+Scoped to this skill's own marked documents/projects only, same as
+find-docs.py - not a blanket "delete every .html under this tree," which
+could remove Quarto output belonging to something else entirely.
 
 Usage: python3 clean-docs.py [path/to/search-root] [--all] [--dry-run]
 Defaults to "." if no path is given. --dry-run reports what would be
@@ -52,6 +63,15 @@ def parse_frontmatter(text: str) -> dict:
     return fields
 
 
+def parse_flat_keys(text: str) -> dict:
+    fields = {}
+    for line in text.splitlines():
+        km = KV_RE.match(line)
+        if km:
+            fields[km.group(1)] = km.group(2).strip().strip("\"'")
+    return fields
+
+
 def find_docs(root: Path):
     docs = []
     for qmd in sorted(root.rglob("*.qmd")):
@@ -61,6 +81,17 @@ def find_docs(root: Path):
         if fields.get("reporting-skill-doc") == "v1":
             docs.append(qmd)
     return docs
+
+
+def find_projects(root: Path):
+    projects = []
+    for quarto_yml in sorted(root.rglob("_quarto.yml")):
+        if not EXCLUDED_DIRS.isdisjoint(quarto_yml.relative_to(root).parts):
+            continue
+        fields = parse_flat_keys(quarto_yml.read_text(encoding="utf-8"))
+        if fields.get("reporting-skill-doc") == "v1":
+            projects.append(quarto_yml.parent)
+    return projects
 
 
 def remove(path: Path, dry_run: bool, removed: list) -> None:
@@ -84,6 +115,7 @@ def main() -> int:
         return 1
 
     docs = find_docs(root)
+    projects = find_projects(root)
     removed = []
     for qmd in docs:
         for suffix in (".html", ".pdf"):
@@ -94,9 +126,14 @@ def main() -> int:
         if files_dir.is_dir():
             remove(files_dir, dry_run, removed)
 
+    for project_dir in projects:
+        site_dir = project_dir / "_site"
+        if site_dir.is_dir():
+            remove(site_dir, dry_run, removed)
+
     if clean_all:
-        doc_dirs = {qmd.parent for qmd in docs}
-        for d in doc_dirs:
+        marked_dirs = {qmd.parent for qmd in docs} | set(projects)
+        for d in marked_dirs:
             for name in (".quarto", ".pixi"):
                 candidate = d / name
                 if candidate.is_dir():

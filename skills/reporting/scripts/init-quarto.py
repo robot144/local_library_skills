@@ -17,9 +17,10 @@ run the one-time `quarto install tinytex` step - see PDF_SETUP_NOTE below
 for why xz is needed and why the TinyTeX install itself isn't a pixi
 dependency, confirmed by testing (see SKILL.md's "PDF output" section).
 
-Usage: python3 init-quarto.py [path/to/name.qmd] [--template report|log] [--format html|pdf]
-Defaults to "./report.qmd" (or "./log.qmd" if --template log), format html,
-if no path/format is given.
+Usage: python3 init-quarto.py [path/to/name.qmd] [--template report|log|slides] [--format html|pdf]
+Defaults to "./report.qmd" (or "./<template>.qmd" for any other
+--template), format html, if no path/format is given. --format pdf isn't
+supported for --template slides - see the guard in main() below.
 """
 import re
 import sys
@@ -140,6 +141,14 @@ def main() -> int:
         del args[i:i + 2]
     if fmt not in ("html", "pdf"):
         print(f"error: --format must be 'html' or 'pdf', got '{fmt}'", file=sys.stderr)
+        return 1
+    if fmt == "pdf" and template == "slides":
+        print(
+            "error: --format pdf isn't supported for --template slides - "
+            "revealjs has its own export workflow, not quarto's html/pdf "
+            "toggle (render to html, then use the browser's Print to PDF)",
+            file=sys.stderr,
+        )
         return 1
 
     template_file = TEMPLATES_DIR / f"{template}.qmd"

@@ -1,14 +1,20 @@
 ---
 name: reporting
-description: Author and render one-off research documents (reports, ongoing-work logs) using Quarto — domain-agnostic, standalone. Use when the user wants to "write a report on X," "start a log of this work," "summarize my progress in a log," "create a report from these results," mentions Quarto directly, or wants a readable narrative document (not raw data) built from a workflow's outputs or a local-library document. Not needed for a quick chat answer that doesn't need its own standing document.
+description: Author and render one-off research documents (reports, ongoing-work logs) or multi-page documentation sites using Quarto — domain-agnostic, standalone. Use when the user wants to "write a report on X," "start a log of this work," "summarize my progress in a log," "create a report from these results," "set up docs for this project," mentions Quarto directly, or wants a readable narrative document (not raw data) built from a workflow's outputs or a local-library document. Not needed for a quick chat answer that doesn't need its own standing document.
 ---
 
 # Reporting (Quarto)
 
 Scaffolds and renders one-off, narrative [Quarto](https://quarto.org/)
-documents from a small set of templates — `report` and `log` for now,
-more later — designed iteratively and reused/refined over time rather
-than invented fresh each time.
+content from a small set of templates, in two different shapes:
+
+- **documents** — `report`, `log`, and `slides` for now, more later: one
+  `.qmd` file is "the document."
+- **projects** — `docs` so far, `book` a likely future addition: a whole
+  directory is the unit, with no single file that is "the document."
+
+Designed iteratively and reused/refined over time rather than invented
+fresh each time, for both shapes.
 
 **This skill is mostly instructions, not automation**, same split as
 `workflow`/`local-library`: the mechanical pieces (scaffolding a new
@@ -24,14 +30,18 @@ skill doesn't depend on either one's files to function.
 
 ## Templates
 
-Bundled with this skill at `templates/<kind>.qmd`, copied into place when
-scaffolding — the generated document and the bundled template are
-independent afterward (editing one doesn't touch the other).
+Document templates are bundled at `templates/<kind>.qmd`; project
+templates are a whole bundled directory, `templates/<kind>/`. Either way,
+copied into place when scaffolding — the generated document/project and
+the bundled template are independent afterward (editing one doesn't
+touch the other).
 
 **Designed iteratively, on purpose.** If a generated document's skeleton
 keeps needing the same manual fix-up across several real uses, that's a
 signal to revise the *template* in `templates/`, not just patch the one
 document in front of you.
+
+### Document kinds
 
 - **`report`** (default) — a draft skeleton, not a mandate: `Summary`,
   `Introduction`, `Methods`, `Results`, `Discussion`, `Conclusions` as H2
@@ -42,21 +52,51 @@ document in front of you.
 - **`log`** — a running record of ongoing work: one H2 section per time
   block, each holding a list of entries. **Default time block is one
   day** — the user may overrule this (e.g. weekly) when daily doesn't fit.
+- **`slides`** — a reveal.js presentation skeleton (`format: revealjs`):
+  a title slide, a smaller-text slide for dense content, a two-column
+  slide, a code slide, and a closing summary slide, each with a `##`
+  per slide (Quarto's reveal.js convention) and a `. . .` example for
+  click-to-reveal pacing. Extracted from a real presentation's
+  structure, not its content — fill in placeholders rather than
+  treating the slide count/order as fixed. No `logo:` by default (left
+  commented out) since a generic template can't assume a logo asset
+  exists; uncomment and point it at a real image once there is one.
+  **`--format pdf` isn't supported for this template** — revealjs has
+  its own export workflow (render to HTML, then the browser's Print to
+  PDF), not Quarto's html/pdf toggle.
 
-Both use Quarto's own built-in table of contents (`toc: true`,
-`toc-depth: 2`) as the navigation "control panel" — a floating panel
-listing every section and subsection, native to Quarto's HTML output,
-nothing custom to build for a first version.
+`report` and `log` use Quarto's own built-in table of contents
+(`toc: true`, `toc-depth: 2`) as the navigation "control panel" — a
+floating panel listing every section and subsection, native to Quarto's
+HTML output, nothing custom to build for a first version. `slides`
+doesn't — reveal.js has its own slide-number/menu navigation instead.
+
+### Project kinds
+
+- **`docs`** — a multi-page Quarto *website* (`project: type: website`
+  in `_quarto.yml`): a navbar (Home, Installation), a floating sidebar
+  ("Getting started" section grouping `index.qmd`+`installation.qmd`,
+  plus standalone `design.md` and `reference.md` pages), and a
+  `figures/` folder. Extracted from a real multi-page docs site's
+  *structure*, not its content — same "fill in placeholders, don't treat
+  the page set as fixed" stance as `slides`. Split `reference.md` into
+  several pages under their own sidebar section once there's enough
+  reference material to need it; don't pre-split before that.
+  **`book`** (Quarto's `project: type: book`) is a likely future second
+  project kind — architecturally identical to `docs` (same whole-project
+  shape, chapters instead of sidebar sections) — not built yet since
+  nothing has needed it so far.
 
 ## Setting up a new document
 
 ```bash
-python3 scripts/init-quarto.py [path/to/name.qmd] [--template report|log] [--format html|pdf]
+python3 scripts/init-quarto.py [path/to/name.qmd] [--template report|log|slides] [--format html|pdf]
 ```
 
 Defaults to `--template report`, `--format html`, and `./report.qmd` (or
-`./log.qmd` if `--template log`) with no path given — see "PDF output"
-below for what `--format pdf` adds. Copies the chosen template into
+`./<template>.qmd` for any other `--template`) with no path given — see
+"PDF output" below for what `--format pdf` adds (not supported for
+`--template slides` — see "Templates" above). Copies the chosen template into
 place, and ensures a `pixi.toml` providing `quarto`+`jupyter` exists —
 searching upward for an ancestor manifest and merging the dependencies
 in, same pattern `local-library`'s own `init-quarto.py` uses, but a
@@ -75,6 +115,29 @@ environment, not each carry a near-identical manifest of their own.
 after scaffolding** — don't leave `[Report title]`/`[Author]` or
 `path/to/your/data` sitting in a document that's actually going to be
 used.
+
+## Setting up a new documentation project
+
+```bash
+python3 scripts/init-docs.py [path/to/project-dir] [--template docs]
+```
+
+Defaults to `--template docs` and `./docs` with no path given. Copies
+the chosen *directory* template into place (unlike `init-quarto.py`,
+there's no single `.qmd` to copy), and always writes its own,
+self-contained `pixi.toml` providing `quarto`+`jupyter` — **never**
+merged into an ancestor manifest, the opposite of `init-quarto.py`'s
+default and the same stance `workflow` takes, since a docs site is a
+substantial, long-lived thing meant to stand on its own, not a quick
+one-off sharing an environment with whatever else is in the same parent
+project. Never overwrites an existing project — if the target directory
+already has a `_quarto.yml`, it's left untouched.
+
+**Fill in the title placeholder and every page's content right after
+scaffolding** — same "don't leave placeholders in a real document"
+discipline as single documents, just across more files (`_quarto.yml`'s
+`website.title`, plus `index.qmd`/`installation.qmd`/`design.md`/
+`reference.md`).
 
 ## Referencing external data
 
@@ -98,7 +161,7 @@ frontmatter, so use it properly):
 
 ```yaml
 reporting-skill-doc: v1
-reporting-skill-kind: report   # or log, slides, article later
+reporting-skill-kind: report   # or log, slides   (article still later)
 ```
 
 ```bash

@@ -1,0 +1,92 @@
+---
+title: "local_library_skills"
+subtitle: "Research skills for coding agents, kept on disk"
+author: "Martin Verlaan"
+date: today
+format:
+  revealjs:
+    theme: dark
+    slide-number: true
+reporting-skill-doc: v1
+reporting-skill-kind: slides
+---
+
+## Working directly on disk, no re-uploading files into a chat each time
+
+**The problem:** the same small research tasks (convert a PDF, scaffold a
+workflow, write up a report) get re-solved from scratch in every
+conversation with a coding agent.
+
+. . .
+
+**This repo:** a set of `SKILL.md`-based skills a coding agent reads and
+runs itself — the agent does the work, the skill just teaches it how.
+
+::: {style="font-size: 0.7em;"}
+The repo's name reflects where this started — a local-library toolkit —
+not its current, broader scope.
+:::
+
+## Five skills, domain-agnostic
+
+::: {style="font-size: 0.75em;"}
+- **`pdf-to-markdown`** — convert a PDF to searchable markdown via a
+  local GPU/CPU OCR pipeline, no API key, no internet after first run
+- **`local-library`** — organize a folder of documents into an indexed,
+  summarized, agent-navigable library
+- **`workflow`** — scaffold and extend reproducible Snakemake pipelines
+- **`reporting`** — author and render one-off Quarto reports, logs, and
+  (as of this deck) presentations
+- **`agent-runner`** — launch a coding agent session from a script, so an
+  agent can be one step in an otherwise scriptable pipeline
+:::
+
+## Two different kinds of problem, two different fixes {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+**Scripted** (deterministic)
+
+- scaffolding a new document/workflow/library
+- finding existing ones
+- cleaning up render output
+
+Small helper scripts, covered by `python_unit_tests/`.
+:::
+::: {.column width="50%"}
+**Judgment** (not scriptable)
+
+- what story a report should tell
+- how to classify and summarize a document
+- when a workflow needs its own rule vs. reusing one
+
+Instructions in `SKILL.md`, validated by actually running the thing.
+:::
+::::
+
+## One skill, every coding agent
+
+```{python}
+#| echo: true
+import os
+sorted(os.listdir("../skills"))
+```
+
+`scripts/activate-skills.py` symlinks every skill above into each known
+agent's own project-scoped skill directory — `.claude/skills/`,
+`.agents/skills/` (Antigravity, and Copilot CLI's alternate path),
+`.codex/skills/`, `.vibe/skills/` — so editing a skill here shows up
+immediately, for whichever agent you're actually running.
+
+## Takeaways
+
+<!-- speaker note for whoever presents this: pick 2-3, don't read all 3 verbatim -->
+
+- **Domain-agnostic on purpose** — none of these five skills assume a
+  particular research field, only a particular *kind* of task
+- **Multi-agent by design, not by accident** — one `skills/` directory,
+  wired into Claude Code, Copilot CLI, Antigravity, Codex CLI, and
+  Mistral Vibe without duplicating a single file
+- **Tested two ways** — fast, free `python_unit_tests/` for the scripts;
+  slower, real-cost `skill_tests/` for whether the skills actually do
+  their job end-to-end

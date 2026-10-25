@@ -1,0 +1,54 @@
+---
+title: "rclone essentials"
+---
+
+::: {.callout-important}
+## This is a demo, not real documentation
+This site is a worked example of the `reporting` skill's `docs` project
+kind (from the [`local_library_skills`](https://github.com/robot144/local_library_skills)
+repo) — it covers only a handful of essentials, for illustration. For
+actual rclone usage, always go to the real thing:
+[rclone.org/docs](https://rclone.org/docs/).
+:::
+
+[rclone](https://rclone.org/) is a command-line program to manage files
+on cloud storage — sometimes described as "rsync for cloud storage." It
+talks to 70+ storage backends (S3, Google Drive, Dropbox, OneDrive,
+Backblaze B2, SFTP, and plain local disk, among many others) through one
+consistent command set.
+
+## Overview
+
+Every storage backend rclone talks to is configured as a **remote** — a
+named config entry you reference as `remote:path`, the same way you'd
+reference a local path. Once a remote is set up, the same commands
+(`copy`, `sync`, `ls`, ...) work identically whether the other side is
+S3, Google Drive, or another machine over SFTP.
+
+## Quick start
+
+This assumes rclone is already installed — see [Installation](installation.qmd).
+
+```bash
+rclone config                       # interactive: set up a remote, e.g. "myremote"
+rclone lsd myremote:                 # list directories at the remote's root
+rclone copy /local/path myremote:backup/   # copy local -> remote, never deletes anything
+rclone sync /local/path myremote:backup/   # make remote match local exactly (can delete on the remote side)
+```
+
+See [Command reference](reference.md) for the rest of the essentials,
+and [Concepts](design.md) for what a "remote" actually is and how the
+config file works.
+
+## Documentation
+
+- [Installation](installation.qmd)
+- [Concepts](design.md)
+- [Command reference](reference.md)
+
+## Real documentation
+
+This demo only scratches the surface. For anything beyond the basics —
+the full command list, every backend's specific setup, flags,
+filtering, mounting, and more — use the real rclone documentation:
+[rclone.org/docs](https://rclone.org/docs/).

@@ -1,0 +1,31 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "[Project name]"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: installation.qmd
+        text: Installation
+
+  sidebar:
+    style: floating
+    contents:
+      - section: "Getting started"
+        contents:
+          - index.qmd
+          - installation.qmd
+      - design.md
+      - reference.md
+
+format:
+  html:
+    theme: flatly
+    toc: true
+    toc-depth: 3
+
+reporting-skill-doc: v1
+reporting-skill-kind: docs

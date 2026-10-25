@@ -1,0 +1,33 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "rclone essentials (DEMO)"
+  navbar:
+    left:
+      - href: index.qmd
+        text: Home
+      - href: installation.qmd
+        text: Installation
+
+  sidebar:
+    style: floating
+    contents:
+      - section: "Getting started"
+        contents:
+          - index.qmd
+          - installation.qmd
+      - href: design.md
+        text: Concepts
+      - href: reference.md
+        text: Command reference
+
+format:
+  html:
+    theme: flatly
+    toc: true
+    toc-depth: 3
+
+reporting-skill-doc: v1
+reporting-skill-kind: docs

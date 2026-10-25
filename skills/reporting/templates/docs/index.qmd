@@ -1,0 +1,20 @@
+---
+title: "[Project name]"
+---
+
+<!-- One paragraph: what this is and who it's for. -->
+
+## Overview
+
+<!-- The core idea in a few sentences - what problem this solves. -->
+
+## Quick start
+
+<!-- Assume Installation (below) is already done. The smallest real
+     example that gets someone to a first working result. -->
+
+## Documentation
+
+- [Installation](installation.qmd)
+- [Design](design.md)
+- [Reference](reference.md)

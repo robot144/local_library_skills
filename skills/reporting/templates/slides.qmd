@@ -1,0 +1,53 @@
+---
+title: "[Presentation title]"
+subtitle: "[Subtitle]"
+author: "[Author]"
+date: today
+format:
+  revealjs:
+    theme: dark
+    slide-number: true
+    # logo: figures/your_logo.png
+reporting-skill-doc: v1
+reporting-skill-kind: slides
+---
+
+## [Opening slide title]
+
+<!-- The hook: what this talk is about and why it matters. -->
+
+. . .
+
+<!-- ". . ." on its own line reveals what follows on the next click -
+     use it between points you want the audience to see one at a time
+     rather than all at once. -->
+
+## [A slide with more text than fits comfortably]
+
+::: {style="font-size: 0.8em;"}
+- <!-- point one -->
+- <!-- point two -->
+:::
+
+## [A two-column slide] {.smaller}
+
+:::: {.columns}
+::: {.column width="50%"}
+<!-- left column - e.g. a figure:
+     ![](figures/your_figure.png){fig-align="center" width="100%"} -->
+:::
+::: {.column width="50%"}
+<!-- right column -->
+:::
+::::
+
+## [A code slide]
+
+```{python}
+#| echo: true
+# A code chunk - set echo: false to show only its output, not the code.
+```
+
+## Summary
+
+<!-- The 2-3 takeaways the audience should leave with. -->

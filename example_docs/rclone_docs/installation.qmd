@@ -1,0 +1,48 @@
+---
+title: "Installation"
+---
+
+::: {.callout-note}
+Demo page — for the authoritative, up-to-date install instructions for
+every platform, see [rclone.org/install](https://rclone.org/install/).
+:::
+
+## Prerequisites
+
+Just a terminal — rclone ships as a single self-contained binary, no
+separate runtime required.
+
+## Install
+
+**Linux / macOS**, official install script:
+
+```bash
+sudo -v && curl https://rclone.org/install.sh | sudo bash
+```
+
+**Package managers** (may lag behind the latest release):
+
+```bash
+# Debian/Ubuntu
+sudo apt install rclone
+
+# Fedora
+sudo dnf install rclone
+
+# macOS (Homebrew)
+brew install rclone
+```
+
+**Manual**: download the right archive for your platform from
+[rclone.org/downloads](https://rclone.org/downloads/) and put the
+`rclone` binary on your `PATH`.
+
+## Verify
+
+```bash
+rclone version
+```
+
+Prints the installed version, OS/arch, and Go runtime version — if that
+runs, you're ready for [Concepts](design.md) and the
+[Command reference](reference.md).

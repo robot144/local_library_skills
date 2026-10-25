@@ -218,3 +218,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# CliCodingAgents Apptainer container runtime state (session logs, memory,
+# installed tools) - local to this machine's container, not source.
+.apptainer-home/
+
+# Per-agent skill symlink farms generated locally by scripts/activate-skills.py
+# (see its docstring) - regenerate with that script, don't commit these.
+.claude/skills/
+.agents/skills/
+.codex/skills/
+.vibe/skills/
