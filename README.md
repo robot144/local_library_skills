@@ -160,6 +160,20 @@ pixi run test     # run the unit test suite (pytest)
 
 Unit tests live under `tests/<skill-name>/`, one subfolder per skill, and cover each skill's Python scripts — scaffolding, parsing, and cleanup logic — not the skills' own `SKILL.md` prose, which guides agent behavior and has no unit-test equivalent; see [`plan.md`](plan.md)'s "Testing" section for how that's validated instead. Coverage so far: `workflow`, `reporting`, `local-library`, and `agent-runner`'s scripts. `pdf-to-markdown` isn't covered yet — its scripts mostly orchestrate actual OCR model calls, a heavier integration-test shape than the others.
 
+### Activating skills during development
+
+Editing a skill under `skills/<name>/` doesn't do anything on its own — an agent only sees the copy installed under its own skill directory (see "Manual Installation" above, which is a plain copy, not a symlink). `scripts/activate-skills.py` closes that gap for local dev: it symlinks every skill under `skills/` straight into each known agent's project-scoped skill directory (see `AGENT_SKILL_DIRS` in the script), so edits show up immediately with no manual re-copy.
+
+```bash
+./scripts/activate-skills.sh   # Linux/macOS/WSL - e.g. inside a CliCodingAgents Apptainer container
+```
+
+```powershell
+scripts/activate-skills.ps1    # Windows - e.g. a VS Code agent extension instead of a containerized CLI
+```
+
+Both are thin wrappers around `scripts/activate-skills.py`; on Windows, where plain symlinks need admin rights or Developer Mode, it falls back to NTFS directory junctions instead. Safe to rerun any time — it only touches links it created, relinking anything that's drifted and removing ones for skills that no longer exist, and prints `No changes.` once everything's already in sync.
+
 ## License
 
 GPL-3.0 — see [LICENSE](LICENSE).
