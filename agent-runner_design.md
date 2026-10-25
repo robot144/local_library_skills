@@ -101,7 +101,7 @@ agent.
 
 ## Worked example 2: an eval harness, built from `agent-runner` itself
 
-**Status: built and actually run.** See `example_eval_workflow/` at the
+**Status: built and actually run.** See `skill_tests/` at the
 repo root, and "Confirmed by actually running it" below for what that run
 found.
 
@@ -160,7 +160,7 @@ full transcript (`run-agent.py`'s own JSON output already includes it),
 and the judge is told to read it directly — see below.
 
 **Confirmed by actually running it — real bugs caught, not just designed
-around.** Built as `example_eval_workflow/` (via `init-workflow.py` +
+around.** Built as `skill_tests/` (via `init-workflow.py` +
 `write_default_vendor_to_config` + the rule chain above), with one test
 case: subject prompt "compute 6 * 7," judge prompt "check the transcript
 says 42." Ran for real — both agent invocations, real cost ($0.0698 +
@@ -192,7 +192,7 @@ matching the real run's actual schema and values via a stub `snakemake`
 object, rather than re-running the whole pipeline just to check a
 reporting change.
 
-**What this doesn't replace**: the pytest suite under `tests/` (see
+**What this doesn't replace**: the pytest suite under `python_unit_tests/` (see
 `plan.md`'s "Testing" section). This is slower, costlier (real agent +
 judge sessions per case), and non-deterministic, so it's a periodic,
 heavier-cadence check, not something run on every script change. It also

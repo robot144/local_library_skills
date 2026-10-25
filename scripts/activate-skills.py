@@ -3,9 +3,8 @@
 "Installation" section for that; it copies, since an installed skill
 shouldn't drift when this repo changes). This symlinks every skill under
 skills/ into each known agent's skill directory, so an agent's own skill
-discovery finds them from any cwd inside this repo - e.g.
-example_eval_workflow's nested agent-runner sessions - without a separate
-copy to keep in sync. Safe to rerun: only touches symlinks (or, on
+discovery finds them from any cwd inside this repo - e.g. skill_tests'
+nested agent-runner sessions - without a separate copy to keep in sync. Safe to rerun: only touches symlinks (or, on
 Windows without admin/Developer Mode, directory junctions) it owns, and
 only when something under skills/ actually changed.
 """

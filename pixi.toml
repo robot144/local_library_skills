@@ -12,7 +12,7 @@ numpy = ">=1.26,<3"
 matplotlib = ">=3.8,<4"
 scikit-learn = ">=1.4,<2"
 xz = ">=5.8,<6"  # needed by `tar` for `quarto install tinytex`'s extraction step in this sandboxed container
-pytest = ">=8,<9"  # unit tests for the skills' Python scripts - see tests/
+pytest = ">=8,<9"  # unit tests for the skills' Python scripts - see python_unit_tests/
 pyyaml = ">=6,<7"  # local-library's sync-quarto-pages.py imports it directly
 
 [tasks]

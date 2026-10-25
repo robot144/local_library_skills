@@ -158,7 +158,7 @@ pixi install     # set up the dev environment (pytest, plus whatever the scripts
 pixi run test     # run the unit test suite (pytest)
 ```
 
-Unit tests live under `tests/<skill-name>/`, one subfolder per skill, and cover each skill's Python scripts — scaffolding, parsing, and cleanup logic — not the skills' own `SKILL.md` prose, which guides agent behavior and has no unit-test equivalent; see [`plan.md`](plan.md)'s "Testing" section for how that's validated instead. Coverage so far: `workflow`, `reporting`, `local-library`, and `agent-runner`'s scripts. `pdf-to-markdown` isn't covered yet — its scripts mostly orchestrate actual OCR model calls, a heavier integration-test shape than the others.
+Unit tests live under `python_unit_tests/<skill-name>/`, one subfolder per skill, and cover each skill's Python scripts — scaffolding, parsing, and cleanup logic — not the skills' own `SKILL.md` prose, which guides agent behavior and has no unit-test equivalent; see [`plan.md`](plan.md)'s "Testing" section for how that's validated instead. Coverage so far: `workflow`, `reporting`, `local-library`, and `agent-runner`'s scripts. `pdf-to-markdown` isn't covered yet — its scripts mostly orchestrate actual OCR model calls, a heavier integration-test shape than the others.
 
 ### Activating skills during development
 

@@ -27,7 +27,7 @@ Two different problems, two different approaches — see the discussion in
 conversation for the reasoning:
 
 - **The scripts** (deterministic Python, e.g. `init-workflow.py`,
-  `find-docs.py`): pytest unit tests, under `tests/<skill-name>/`, run via
+  `find-docs.py`): pytest unit tests, under `python_unit_tests/<skill-name>/`, run via
   `pixi run test`. Covers the pure parsing/scaffolding/cleanup logic —
   **not** actual `pixi install`/`quarto render`/`snakemake` execution
   (or, for `agent-runner`, actually launching a live agent session), which
@@ -60,7 +60,7 @@ conversation for the reasoning:
   design on paper: `agent-runner_design.md`'s "Worked example 2"
   (subject-prompt/judge-prompt eval harness, reusing `workflow`'s split →
   per-case → collect rule shape) is now built and actually run, as
-  `example_eval_workflow/` — one real test case, real cost ($0.18 for both
+  `skill_tests/` — one real test case, real cost ($0.18 for both
   agent invocations), correct `PASS` verdict. Tracing through the design
   before running it for real also caught a genuine bug: the judge's `cwd`
   is deliberately the same as the subject's, so `run-agent.py`'s own

@@ -25,7 +25,7 @@ pixi shell
 
 ## Testing
 
-This repo has a pytest suite for the skills' Python scripts, under `tests/<skill-name>/`. Run it after changing anything in `skills/*/scripts/`:
+This repo has a pytest suite for the skills' Python scripts, under `python_unit_tests/<skill-name>/`. Run it after changing anything in `skills/*/scripts/`:
 
 ```bash
 pixi run test
