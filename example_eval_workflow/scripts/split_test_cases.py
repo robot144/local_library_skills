@@ -13,7 +13,6 @@ assert len(test_cases) == len(snakemake.output.first) == len(snakemake.output.se
 # cwd (scratch/{case}/{size}/run) is nested relative to this workflow dir.
 PLACEHOLDERS = {
     "{EXAMPLE_DOCS}": str(Path("../example_docs").resolve()),
-    "{LOCAL_LIBRARY_SKILL}": str(Path("../skills/local-library/SKILL.md").resolve()),
 }
 
 

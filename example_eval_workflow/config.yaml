@@ -1,1 +1,5 @@
 agent_vendor: claude-code
+# Where installed skills live, relative to this workflow dir - see
+# scripts/activate-skills.py at the repo root. Override this once the
+# workflow is deployed somewhere skills aren't a sibling directory.
+skills_root: ../.claude/skills

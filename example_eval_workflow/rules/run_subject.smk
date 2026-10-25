@@ -25,7 +25,7 @@ rule run_subject:
             f"--permission-mode {PERMISSION_MODES[wc.case]}" if PERMISSION_MODES.get(wc.case) else ""
         ),
     shell:
-        "python3 ../skills/agent-runner/scripts/run-agent.py "
+        f"python3 {AGENT_RUNNER} "
         "--prompt-file {input.prompt} --cwd scratch/{wildcards.case}/{wildcards.size}/run "
         "--config config.yaml {params.size_flag} {params.perm_flag} --output {output.result} &> {log} "
         "&& cp scratch/{wildcards.case}/{wildcards.size}/run/agent_transcript.json {output.transcript}"

@@ -32,9 +32,9 @@
   # Read (skimming the docs), same reason as python_sine_csv.
   permission_mode: bypassPermissions
   first: >-
-    Read the skill instructions at {LOCAL_LIBRARY_SKILL} and follow them to
-    set up a new local library at ./local_library (in your current working
-    directory), then add the document found in {EXAMPLE_DOCS} to it:
+    Using the local-library skill, set up a new local library at
+    ./local_library (in your current working directory), then add the
+    document found in {EXAMPLE_DOCS} to it:
     Kernkamp2011_FlexibleMesh.pdf. It already has a matching folder next to
     it (Kernkamp2011_FlexibleMesh/Kernkamp2011_FlexibleMesh.md) from a prior
     pdf-to-markdown conversion - copy it into the library alongside the
@@ -65,13 +65,13 @@
   # stage_search_library.smk, reusing local_library_add_docs's output.
   first: >-
     A local library already exists at ./local_library (already staged for
-    you - no need to set one up). Following the local-library skill's
-    "Searching an existing library" procedure (see
-    {LOCAL_LIBRARY_SKILL}), find and read the Kernkamp et al. paper in
-    this library and answer: how is the cell center positioned in
-    relation to the cell nodes? Cite the section (and page, if you can
-    find one via the paper's own _meta.json) where you found the answer.
-    Respond with just the answer and citation, no other text.
+    you - no need to set one up). Using the local-library skill's
+    "Searching an existing library" procedure, find and read the
+    Kernkamp et al. paper in this library and answer: how is the cell
+    center positioned in relation to the cell nodes? Cite the section
+    (and page, if you can find one via the paper's own _meta.json) where
+    you found the answer. Respond with just the answer and citation, no
+    other text.
   second: >-
     Read ./subject_transcript.json in this directory (the answer is in
     its "result" field). Check that it correctly states the cell center

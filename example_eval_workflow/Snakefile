@@ -7,6 +7,8 @@ with open("data/test_cases.yaml") as f:
 
 CASES = [tc["name"] for tc in TEST_CASES]
 PERMISSION_MODES = {tc["name"]: tc.get("permission_mode") for tc in TEST_CASES}
+SKILLS_ROOT = config.get("skills_root", "../.claude/skills")
+AGENT_RUNNER = f"{SKILLS_ROOT}/agent-runner/scripts/run-agent.py"
 
 # "default" = no --size passed at all, whatever the vendor's own default
 # resolves to (sonnet, confirmed by testing - see agent-runner_design.md).

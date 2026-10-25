@@ -11,6 +11,6 @@ rule judge_result:
     log:
         "logs/{case}/{size}/judge_result.log",
     shell:
-        "python3 ../skills/agent-runner/scripts/run-agent.py "
+        f"python3 {AGENT_RUNNER} "
         "--prompt-file {input.prompt} --cwd scratch/{wildcards.case}/{wildcards.size}/run "
         "--config config.yaml --output {output.result} &> {log}"
